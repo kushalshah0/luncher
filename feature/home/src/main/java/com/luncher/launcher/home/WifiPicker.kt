@@ -1,19 +1,28 @@
 package com.luncher.launcher.home
 
 import android.Manifest
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.text.InputType
 import android.view.View
+import android.view.ViewGroup
+import android.view.animation.LinearInterpolator
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.Toast
 import com.luncher.launcher.ui.R as UiR
 
@@ -30,7 +39,12 @@ internal class WifiPicker(private val activity: Activity) {
 
     private val wifi = activity.applicationContext.getSystemService(Activity.WIFI_SERVICE) as WifiManager
     private val menu = PillMenu(activity)
+    private val handler = Handler(Looper.getMainLooper())
     private var anchor: View? = null
+    private var page = Page.LIST
+    private var scanning = false
+
+    private enum class Page { LIST, ADD }
 
     fun show(anchor: View) {
         this.anchor = anchor
@@ -41,6 +55,12 @@ internal class WifiPicker(private val activity: Activity) {
             activity.requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_LOCATION)
             return
         }
+        wifi.startScan()   // for Refresh, and the next time; the list shows the last scan's results
+        showList(anchor)
+    }
+
+    /** The menu's main page: the switch, Add network and Refresh, the networks, Wi-Fi settings. */
+    private fun showList(anchor: View, focusRefresh: Boolean = false) {
         val list = mutableListOf<View>()
         val on = wifi.isWifiEnabled
         val current = wifi.connectionInfo?.ssid.orEmpty().removeSurrounding("\"").takeUnless { it == UNKNOWN_SSID }.orEmpty()
@@ -54,8 +74,10 @@ internal class WifiPicker(private val activity: Activity) {
             list.add(menu.divider())
             list.add(menu.note("Turn on Wi-Fi to see networks"))
         } else {
-            list.add(menu.splitRow(UiR.drawable.icon_plus, "Add network", ::addNetwork, R.drawable.home_ic_updown) { show(anchor) })
-            wifi.startScan()   // for the next time; the list shows the last scan's results
+            val actions = menu.splitRow(UiR.drawable.icon_plus, "Add network", { showAddNetwork(anchor) }, R.drawable.home_ic_updown) {
+                refresh(anchor, it)
+            }
+            list.add(actions)
             val networks = wifi.scanResults.orEmpty()
                 .filter { it.SSID.isNotBlank() }
                 .groupBy { it.SSID }.map { (_, same) -> same.maxByOrNull { it.level }!! }
@@ -69,54 +91,98 @@ internal class WifiPicker(private val activity: Activity) {
                     else -> "Open"
                 }
                 menu.row(R.drawable.home_ic_wifi, network.SSID, status, statusGreen = connected) { connect(network) }
-            }.ifEmpty { listOf(menu.row(R.drawable.home_ic_wifi, "Searching…", null) { show(anchor) }) }
+            }.ifEmpty { listOf(menu.note("No networks found")) }
             list.addAll(rows)
-            focus = rows.first()   // so turning Wi-Fi off takes Up first, past Add network
+            // The first network, so turning Wi-Fi off takes Up first, past Add network; Refresh
+            // again after refreshing.
+            focus = when {
+                focusRefresh -> (actions as ViewGroup).getChildAt(1)
+                rows.first().isFocusable -> rows.first()
+                else -> actions
+            }
         }
         list.add(menu.divider())
         list.add(menu.row(R.drawable.home_ic_settings, "Wi-Fi settings", null) {
             runCatching { activity.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) }
         })
+        page = Page.LIST
         menu.show(anchor, list, focus)
     }
 
     /**
-     * A network by its name, e.g. a hidden one: open without a password, else WPA/WPA2 (8 to 63
-     * characters). WEP and enterprise networks are Wi-Fi settings' to add.
+     * Refresh: [button]'s arrows turn while Android scans, at least [MIN_SPIN_MS] so it's seen,
+     * at most [SCAN_TIMEOUT_MS]; then the list shows what it found, Refresh focused again.
      */
-    private fun addNetwork() {
-        val name = EditText(activity).apply { hint = "Network name"; setSingleLine() }
-        val password = EditText(activity).apply {
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            hint = "Password (none if open)"
+    private fun refresh(anchor: View, button: View) {
+        if (scanning) return
+        scanning = true
+        val arrows = (button as ViewGroup).getChildAt(0)
+        val spin = ObjectAnimator.ofFloat(arrows, View.ROTATION, 0f, 360f).apply {
+            duration = SPIN_MS
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
         }
-        val padding = (20 * activity.resources.displayMetrics.density).toInt()
-        val fields = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(padding, 0, padding, 0)
-            addView(name)
-            addView(password)
+        val started = SystemClock.elapsedRealtime()
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) = finishRefresh(anchor, this, spin, started)
         }
-        AlertDialog.Builder(activity, DIALOG_THEME)
-            .setTitle("Add network").setView(fields)
-            .setPositiveButton("Connect") { _, _ ->
+        val filter = IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
+        if (Build.VERSION.SDK_INT >= 33) activity.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED) else activity.registerReceiver(receiver, filter)
+        if (!wifi.startScan()) finishRefresh(anchor, receiver, spin, started)
+        handler.postDelayed({ finishRefresh(anchor, receiver, spin, started) }, SCAN_TIMEOUT_MS)
+    }
+
+    private fun finishRefresh(anchor: View, receiver: BroadcastReceiver, spin: ObjectAnimator, started: Long) {
+        if (!scanning) return
+        scanning = false
+        runCatching { activity.unregisterReceiver(receiver) }
+        handler.removeCallbacksAndMessages(null)
+        val wait = (started + MIN_SPIN_MS - SystemClock.elapsedRealtime()).coerceAtLeast(0)
+        handler.postDelayed({
+            spin.cancel()
+            if (menu.isShowing && page == Page.LIST) showList(anchor, focusRefresh = true)
+        }, wait)
+    }
+
+    /**
+     * Add network, a page of the menu: a network by its name, e.g. a hidden one: open without a
+     * password, else WPA/WPA2 (8 to 63 characters). WEP and enterprise networks are Wi-Fi
+     * settings' to add. The back row, and Back, return to the list.
+     */
+    private fun showAddNetwork(anchor: View) {
+        val name = menu.field("e.g. Home Wi-Fi")
+        val password = menu.field("None if open", password = true)
+        val back = { showList(anchor) }
+        page = Page.ADD
+        menu.show(anchor, listOf(
+            menu.backRow("Add network", back),
+            menu.divider(),
+            menu.caption("Network name"),
+            name,
+            menu.caption("Password"),
+            password,
+            menu.button("Connect") {
                 val ssid = name.text.toString().trim()
                 val key = password.text.toString()
                 when {
                     ssid.isEmpty() -> toast("Enter the network's name")
                     key.isNotEmpty() && key.length !in 8..63 -> toast("A WPA password has 8 to 63 characters")
-                    else -> add(WifiConfiguration().apply {
-                        SSID = "\"$ssid\""
-                        hiddenSSID = true   // connects whether or not the name is broadcast
-                        if (key.isEmpty()) {
-                            allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
-                        } else {
-                            preSharedKey = "\"$key\""
-                        }
-                    }, ssid)
+                    else -> {
+                        menu.close()
+                        add(WifiConfiguration().apply {
+                            SSID = "\"$ssid\""
+                            hiddenSSID = true   // connects whether or not the name is broadcast
+                            if (key.isEmpty()) {
+                                allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
+                            } else {
+                                preSharedKey = "\"$key\""
+                            }
+                        }, ssid)
+                    }
                 }
-            }
-            .setNegativeButton("Cancel", null).show()
+            },
+        ), focus = name, onBack = back)
     }
 
     /** After the location permission was granted. */
@@ -174,6 +240,9 @@ internal class WifiPicker(private val activity: Activity) {
     companion object {
         const val REQUEST_LOCATION = 42
         const val MAX_NETWORKS = 8
+        const val SPIN_MS = 700L
+        const val MIN_SPIN_MS = 900L
+        const val SCAN_TIMEOUT_MS = 8_000L
         /** What WifiInfo says while connected to no network. */
         const val UNKNOWN_SSID = "<unknown ssid>"
         /** Light, as the menus. */

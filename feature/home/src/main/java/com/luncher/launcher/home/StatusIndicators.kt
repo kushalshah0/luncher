@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Environment
@@ -17,8 +18,8 @@ import java.io.File
 
 /**
  * The home screen's status pills (NETTV fork), beside the settings entry: the network (Wi-Fi,
- * Ethernet, or offline), the free memory, and USB
- * while a USB drive is mounted. Read every [INTERVAL_MS] while the home screen is visible: the
+ * Ethernet, or offline), the free memory, USB while a USB drive is mounted, and a key while a VPN
+ * is connected. Read every [INTERVAL_MS] while the home screen is visible: the
  * screen calls [start] and [stop] with the clock's, so a hidden home screen does no work.
  *
  * [cleanMemory] (OK on the RAM pill) stops other apps' background processes, asks the box's root
@@ -29,6 +30,7 @@ internal class StatusIndicators(row: View) {
     val network: TextView = row.findViewById(R.id.home_status_network)
     val ram: TextView = row.findViewById(R.id.home_status_ram)
     private val usb: TextView = row.findViewById(R.id.home_status_usb)
+    private val vpn: TextView = row.findViewById(R.id.home_status_vpn)
 
     private val context: Context = row.context.applicationContext
     private val handler = Handler(Looper.getMainLooper())
@@ -60,6 +62,7 @@ internal class StatusIndicators(row: View) {
         showNetwork()
         if (SystemClock.elapsedRealtime() >= ramMessageUntil) ram.text = "${freeMb()} MB"
         usb.visibility = if (usbMounted()) View.VISIBLE else View.GONE
+        vpn.visibility = if (vpnConnected()) View.VISIBLE else View.GONE
     }
 
     private fun freeMb(): Long {
@@ -81,6 +84,15 @@ internal class StatusIndicators(row: View) {
             networkIcon = icon
         }
         network.text = text
+    }
+
+    /**
+     * Whether a VPN is connected, e.g. WireGuard's tunnel: one of the networks is a VPN. Not
+     * whether its server answers: WireGuard's tunnel is up from the moment it's switched on.
+     */
+    @Suppress("DEPRECATION") // allNetworks (API 31): a NetworkCallback would do, but this is read every tick anyway.
+    private fun vpnConnected(): Boolean = connectivity.allNetworks.any {
+        connectivity.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
     }
 
     /** Whether a removable drive is mounted; StorageVolume lists them from API 24 only. */

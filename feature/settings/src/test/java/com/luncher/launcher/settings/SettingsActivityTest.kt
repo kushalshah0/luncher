@@ -1,6 +1,8 @@
 package com.luncher.launcher.settings
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.pm.ResolveInfo
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
@@ -115,7 +117,26 @@ class SettingsActivityTest {
     }
 
     @Test
-    fun `OK on the system settings opens them in a task of their own`() {
+    fun `OK on the system settings opens the TV's own, by name, in a task of their own`() {
+        val activity = start()
+        val tvSettings = ResolveInfo().apply {
+            activityInfo = ActivityInfo().apply {
+                packageName = "com.android.tv.settings"; name = "com.android.tv.settings.MainSettings"
+            }
+        }
+        shadowOf(activity.packageManager).addResolveInfoForIntent(tvSettingsIntent(), tvSettings)
+
+        activity.entries()[2].requestFocus()
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        val intent = shadowOf(activity).nextStartedActivity
+        assertEquals("com.android.tv.settings/.MainSettings", intent.component?.flattenToShortString())
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    // A device with no TV settings app (not a TV, or a firmware without one).
+    @Test
+    fun `opens ACTION_SETTINGS when the device has no TV settings app`() {
         val activity = start()
 
         activity.entries()[2].requestFocus()
@@ -129,7 +150,7 @@ class SettingsActivityTest {
     @Test
     fun `says so when the device has no settings app`() {
         val activity = start()
-        // Nothing handles ACTION_SETTINGS here, so starting it now throws, as on such a device.
+        // Nothing handles either settings intent here, so starting one throws, as on such a device.
         shadowOf(activity.application).checkActivities(true)
 
         activity.entries()[2].requestFocus()

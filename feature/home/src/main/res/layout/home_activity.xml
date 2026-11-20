@@ -86,7 +86,7 @@
                 android:textSize="@dimen/home_move_hint_text"
                 android:visibility="gone" />
 
-            <!-- Status pills (StatusIndicators): network, free RAM, USB. Glass look, not focusable. -->
+            <!-- Status pills (StatusIndicators): network, free RAM, USB, VPN. Glass look, not focusable. -->
             <LinearLayout
                 android:id="@+id/home_status"
                 android:layout_width="wrap_content"
@@ -104,6 +104,13 @@
                     android:id="@+id/home_status_usb"
                     style="@style/HomeStatusPill"
                     android:drawableLeft="@drawable/home_ic_usb"
+                    android:visibility="gone" />
+                <!-- Only while a VPN is connected, e.g. WireGuard's tunnel. -->
+                <TextView
+                    android:id="@+id/home_status_vpn"
+                    style="@style/HomeStatusPill"
+                    android:contentDescription="@string/home_status_vpn"
+                    android:drawableLeft="@drawable/home_ic_vpn"
                     android:visibility="gone" />
             </LinearLayout>
 

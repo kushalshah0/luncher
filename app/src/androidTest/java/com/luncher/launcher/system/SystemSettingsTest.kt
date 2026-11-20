@@ -55,7 +55,11 @@ class SystemSettingsTest {
     @Test
     fun systemSettingsEntry_opensTheDeviceSettings_andBackReturnsToThePanel() {
         val startedAt = System.currentTimeMillis()
-        val settings = checkNotNull(resolvedActivity(Settings.ACTION_SETTINGS)) { "nothing opens the device's settings" }
+        // As the panel opens them: the TV's own settings first (SettingsActivity.openSystemSettings).
+        val settings = checkNotNull(
+            resolvedActivity(Intent.ACTION_MAIN, "android.intent.category.LEANBACK_SETTINGS")
+                ?: resolvedActivity(Settings.ACTION_SETTINGS)
+        ) { "nothing opens the device's settings" }
             .substringBefore('/')
         application.startActivity(Intent(application, SettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         device.waitUntil(Until.hasObject(systemSettingsEntry), TIMEOUT_MS) { "The settings panel didn't open" }

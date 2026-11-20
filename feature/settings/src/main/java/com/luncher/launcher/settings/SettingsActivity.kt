@@ -93,12 +93,28 @@ class SettingsActivity : Activity() {
      */
     private fun openOwnPanel(intent: Intent) = startActivity(intent)
 
-    /** In a task of its own, like any other app; Back from it returns to this panel. */
+    /**
+     * In a task of its own, like any other app; Back from it returns to this panel. The TV's own
+     * settings first: on some boxes (a Mi Box 3, Android 7.1) ACTION_SETTINGS opens a phone
+     * Settings app left in the firmware, which crashes on its first entry.
+     */
     private fun openSystemSettings() {
         try {
-            startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            startActivity((tvSettings() ?: Intent(Settings.ACTION_SETTINGS)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, R.string.settings_system_unavailable, Toast.LENGTH_SHORT).show()
         }
     }
+
+    /**
+     * The TV's settings, e.g. com.android.tv.settings/.MainSettings, by name: their activity lacks
+     * CATEGORY_DEFAULT, so startActivity can't resolve the intent itself.
+     */
+    private fun tvSettings(): Intent? =
+        packageManager.queryIntentActivities(tvSettingsIntent(), 0).firstOrNull()?.activityInfo
+            ?.let { Intent(Intent.ACTION_MAIN).setClassName(it.packageName, it.name) }
 }
+
+/** What Android TV launchers open for the settings; in the manifest's <queries> too, for API 30+. */
+internal fun tvSettingsIntent(): Intent =
+    Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.LEANBACK_SETTINGS")

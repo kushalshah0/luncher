@@ -17,8 +17,8 @@ import android.widget.Toast
 
 /**
  * The Wi-Fi dropdown (NETTV fork): a [PillMenu] below the network pill, listing
- * the networks around, the connected one first and marked "Connected"; the focused row is white
- * with black text. OK on a network connects to it, asking for the password of a secured network
+ * a switch for Wi-Fi itself (off asks first), then the networks around, the connected one first
+ * and marked "Connected". OK on a network connects to it, asking for the password of a secured network
  * that isn't saved yet; the last rows rescan or open Android's Wi-Fi settings. Uses the
  * pre-Android 10 WifiManager calls, which still work on the Android 7 box this fork is for.
  */
@@ -39,11 +39,22 @@ internal class WifiPicker(private val activity: Activity) {
             return
         }
         val list = mutableListOf<View>()
-        if (!wifi.isWifiEnabled) {
-            list.add(menu.row(R.drawable.home_ic_wifi_off, "Turn Wi-Fi on", null) { wifi.isWifiEnabled = true; toast("Turning Wi-Fi on…") })
+        val on = wifi.isWifiEnabled
+        val current = wifi.connectionInfo?.ssid.orEmpty().removeSurrounding("\"").takeUnless { it == UNKNOWN_SSID }.orEmpty()
+        val status = when {
+            !on -> "Off"
+            current.isNotEmpty() -> "Connected to $current"
+            else -> "Not connected"
+        }
+        val header = menu.header("Wi-Fi", status, on) {
+            if (on) confirmTurnOff() else { wifi.isWifiEnabled = true; toast("Turning Wi-Fi on…") }
+        }
+        list.add(header)
+        list.add(menu.divider())
+        if (!on) {
+            list.add(menu.note("Turn on Wi-Fi to see networks"))
         } else {
             wifi.startScan()   // for the next time; the list shows the last scan's results
-            val current = wifi.connectionInfo?.ssid.orEmpty().removeSurrounding("\"")
             val networks = wifi.scanResults.orEmpty()
                 .filter { it.SSID.isNotBlank() }
                 .groupBy { it.SSID }.map { (_, same) -> same.maxByOrNull { it.level }!! }
@@ -52,20 +63,30 @@ internal class WifiPicker(private val activity: Activity) {
             if (networks.isEmpty()) list.add(menu.row(R.drawable.home_ic_wifi, "Searching…", null) { show(anchor) })
             for (network in networks) {
                 val connected = network.SSID == current
-                val status = when {
+                val networkStatus = when {
                     connected -> "●  Connected"
                     secured(network) -> "Secured"
                     else -> "Open"
                 }
-                list.add(menu.row(R.drawable.home_ic_wifi, network.SSID, status, statusGreen = connected) { connect(network) })
+                list.add(menu.row(R.drawable.home_ic_wifi, network.SSID, networkStatus, statusGreen = connected) { connect(network) })
             }
+            list.add(menu.divider())
+            list.add(menu.row(R.drawable.home_ic_updown, "Refresh", null) { show(anchor) })
         }
-        list.add(menu.divider())
-        list.add(menu.row(R.drawable.home_ic_updown, "Refresh", null) { show(anchor) })
         list.add(menu.row(R.drawable.home_ic_settings, "Wi-Fi settings", null) {
             runCatching { activity.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) }
         })
-        menu.show(anchor, list)
+        // On the first network, so turning Wi-Fi off takes Up first; while it's off, on the switch.
+        menu.show(anchor, list, focus = if (on) list[2] else header)
+    }
+
+    /** Off cuts everything the box streams, and the VPN: asked first. */
+    private fun confirmTurnOff() {
+        AlertDialog.Builder(activity, DIALOG_THEME)
+            .setTitle("Turn Wi-Fi off?")
+            .setMessage("Streaming and the VPN will disconnect.")
+            .setPositiveButton("Turn off") { _, _ -> wifi.isWifiEnabled = false; toast("Turning Wi-Fi off…") }
+            .setNegativeButton("Cancel", null).show()
     }
 
     /** After the location permission was granted. */
@@ -91,7 +112,7 @@ internal class WifiPicker(private val activity: Activity) {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             hint = "Password"
         }
-        AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        AlertDialog.Builder(activity, DIALOG_THEME)
             .setTitle(network.SSID).setView(field)
             .setPositiveButton("Connect") { _, _ ->
                 val password = field.text.toString()
@@ -123,5 +144,9 @@ internal class WifiPicker(private val activity: Activity) {
     companion object {
         const val REQUEST_LOCATION = 42
         const val MAX_NETWORKS = 8
+        /** What WifiInfo says while connected to no network. */
+        const val UNKNOWN_SSID = "<unknown ssid>"
+        /** Light, as the menus. */
+        const val DIALOG_THEME = android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
     }
 }

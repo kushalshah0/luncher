@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- The home screen's status row (StatusIndicators): network type and WiFi signal. Normal
+         permissions, granted at install. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
     <!-- As the app declares it, so the JVM tests, which have no app manifest, follow a
          right-to-left language as the app does. -->
     <application android:supportsRtl="true">

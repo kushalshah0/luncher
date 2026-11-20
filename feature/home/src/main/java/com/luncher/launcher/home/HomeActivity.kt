@@ -61,6 +61,8 @@ class HomeActivity : Activity() {
     private lateinit var tiles: AppTilesView
     private lateinit var clockView: ClockView
     private lateinit var settingsEntry: View
+    private lateinit var statusView: View
+    private lateinit var status: StatusIndicators
     private lateinit var empty: TextView
     private lateinit var move: MoveMode
     private lateinit var wallpaper: HomeWallpaper
@@ -130,11 +132,13 @@ class HomeActivity : Activity() {
         clockView = findViewById(R.id.home_clock)
         settingsEntry = findViewById(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
+        statusView = findViewById(R.id.home_status)
+        status = StatusIndicators(findViewById(R.id.home_status))
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) { tiles.frost = it }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
             tiles,
-            normalBar = listOf(clockView, settingsEntry),
+            normalBar = listOf(clockView, statusView, settingsEntry),
             title = findViewById(R.id.home_move_title),
             hint = findViewById(R.id.home_move_hint),
             arrangements,
@@ -167,6 +171,7 @@ class HomeActivity : Activity() {
     override fun onStart() {
         super.onStart()
         clockView.start(clock)
+        status.start()
         wallpaper.start()
         working.start()
         tileImages.addListener(showTileImages)
@@ -186,6 +191,7 @@ class HomeActivity : Activity() {
         renameDialog?.dismiss()
         move.end()
         clockView.stop()
+        status.stop()
         wallpaper.stop()
         working.stop()
         tileImages.removeListener(showTileImages)

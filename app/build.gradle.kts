@@ -9,7 +9,8 @@ android {
     namespace = "com.luncher.launcher"
 
     defaultConfig {
-        applicationId = "com.luncher.launcher"
+        // Fork for the NETTV box: its own id, so it installs next to the original Luncher.
+        applicationId = "com.kushal.luncher"
         // The version, changed by hand before each release (docs/RELEASING.md#versions). Both are
         // written out, as literals and before any other line naming them: F-Droid finds a
         // release's version by reading this file. The check after the android block keeps them

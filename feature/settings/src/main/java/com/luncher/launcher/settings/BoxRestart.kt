@@ -29,7 +29,7 @@ import java.io.File
  * the RAM pill's clear-request, and restarts the box when [REQUEST] appears.
  *
  * OK on the entry opens a small modal over the dimmed screen, white like the home screen's Wi-Fi
- * and VPN menus: a restart icon, "Restart now?", Cancel (focused, so a stray OK restarts nothing)
+ * and VPN menus: "Restart now?" with a restart icon, Cancel (focused, so a stray OK restarts nothing)
  * and Restart. Restart leaves the
  * request and fades in "Restarting…" over everything. If the box is still up after [TIMEOUT_MS],
  * its script isn't running: the request goes, so it can't restart the box out of the blue later.
@@ -53,20 +53,22 @@ internal class BoxRestart(private val activity: Activity) {
             gravity = Gravity.CENTER_HORIZONTAL
             background = GradientDrawable().apply { cornerRadius = dp(22).toFloat(); setColor(Color.WHITE) }
             elevation = dp(24).toFloat()
-            setPadding(dp(22), dp(24), dp(22), dp(20))
-            addView(ImageView(activity).apply {
-                setImageResource(UiR.drawable.icon_reset)
-                imageTintList = ColorStateList.valueOf(INK)
-                background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(FIELD) }
-                setPadding(dp(12), dp(12), dp(12), dp(12))
-            }, LinearLayout.LayoutParams(dp(48), dp(48)))
-            addView(TextView(activity).apply {
-                setText(R.string.settings_restart_title)
-                textAlignment = View.TEXT_ALIGNMENT_CENTER   // else the theme's start alignment wins
-                textSize = 18f
-                setTextColor(INK)
-                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-                setPadding(0, dp(14), 0, 0)
+            setPadding(dp(22), dp(22), dp(22), dp(20))
+            // The title, with the restart icon at its start.
+            addView(LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER
+                addView(ImageView(activity).apply {
+                    setImageResource(UiR.drawable.icon_reset)
+                    imageTintList = ColorStateList.valueOf(INK)
+                }, LinearLayout.LayoutParams(dp(20), dp(20)))
+                addView(TextView(activity).apply {
+                    setText(R.string.settings_restart_title)
+                    textSize = 18f
+                    setTextColor(INK)
+                    typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                    setPadding(dp(10), 0, 0, 0)
+                })
             }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL

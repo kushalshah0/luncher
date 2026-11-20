@@ -33,6 +33,7 @@ fun appearanceOptions(): AppearanceOptions =
                     AppearanceOption.VerticalAlignment,
                     AppearanceOption.HorizontalAlignment,
                     AppearanceOption.FullBottomRow,
+                    AppearanceOption.TileSize,
                     AppearanceOption.CornerRadius,
                     AppearanceOption.FocusFrame,
                     AppearanceOption.AppName,

@@ -38,6 +38,7 @@
     <string name="settings_appearance_full_bottom_row">Full bottom row</string>
     <!-- An option: how round the corners of the app tiles are. -->
     <string name="settings_appearance_corner_radius">Corner radius</string>
+    <string name="settings_appearance_tile_size" translatable="false">Tile size</string>
     <!-- Its values: the radius in dp, the unit of size Android uses, 0 for square corners. -->
     <string name="settings_appearance_radius_dp"><xliff:g id="radius" example="8">%1$d</xliff:g> dp</string>
     <!-- Its last value: the tiles' ends fully round, half circles, their top and bottom straight,

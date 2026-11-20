@@ -67,6 +67,7 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
         AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
         AppearanceOption.CornerRadius -> R.string.settings_appearance_corner_radius
         AppearanceOption.FocusFrame -> R.string.settings_appearance_focus_frame
+        AppearanceOption.TileSize -> R.string.settings_appearance_tile_size
         AppearanceOption.AppName -> R.string.settings_appearance_app_name
         AppearanceOption.ShowTime -> R.string.settings_appearance_time
         AppearanceOption.ShowDate -> R.string.settings_appearance_date
@@ -89,6 +90,7 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
             Corners.Pill -> context.getString(R.string.settings_appearance_pill)
         }
         AppearanceOption.FocusFrame -> context.getString(onOff(AppearanceOption.FocusFrame.get(model)))
+        AppearanceOption.TileSize -> context.getString(R.string.settings_appearance_radius_dp, AppearanceOption.TileSize.get(model))
         AppearanceOption.AppName -> context.getString(appName(AppearanceOption.AppName.get(model)))
         AppearanceOption.ShowTime -> context.getString(shown(AppearanceOption.ShowTime.get(model)))
         AppearanceOption.ShowDate -> context.getString(shown(AppearanceOption.ShowDate.get(model)))

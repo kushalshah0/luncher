@@ -1,7 +1,10 @@
 package com.luncher.launcher.home
 
 import android.content.Context
+import android.text.SpannableString
+import android.text.Spanned
 import android.text.format.DateFormat
+import android.text.style.RelativeSizeSpan
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +12,9 @@ import android.widget.TextView
 import com.luncher.domain.clock.Clock
 import com.luncher.domain.clock.ClockReading
 import com.luncher.domain.layout.TopBarItem
+import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -42,6 +47,9 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
     private var atRight = false
     private var showTime = true
     private var showDate = true
+
+    /** NETTV fork: "Good evening" above the clock, set with each reading; null shows none. */
+    var greeting: TextView? = null
 
     private var clock: Clock? = null
     private val update: () -> Unit = { clock?.let { show(it.read()) } }
@@ -135,8 +143,29 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
     private fun show(reading: ClockReading) {
         if (reading.timeZone != formatZone || reading.uses24Hour != format24Hour) createFormats(reading)
         val now = Date(reading.epochMillis)
-        time.text = timeFormat.format(now)
+        time.text = smallAmPm(timeFormat.format(now))
         date.text = dateFormat.format(now)
+        greeting?.let { view ->
+            val hour = Calendar.getInstance(TimeZone.getTimeZone(reading.timeZone)).apply { time = now }.get(Calendar.HOUR_OF_DAY)
+            view.text = when (hour) {
+                in 5..11 -> "Good morning"
+                in 12..16 -> "Good afternoon"
+                in 17..21 -> "Good evening"
+                else -> "Good night"
+            }
+        }
+    }
+
+    /** NETTV fork: "5:36 PM" with the AM/PM marker small, as on the big clock of a TV home screen. */
+    private fun smallAmPm(text: String): CharSequence {
+        for (marker in DateFormatSymbols(Locale.getDefault()).amPmStrings) {
+            val at = text.indexOf(marker)
+            if (marker.isEmpty() || at < 0) continue
+            return SpannableString(text).apply {
+                setSpan(RelativeSizeSpan(AM_PM_SIZE), at, at + marker.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+        }
+        return text
     }
 
     private fun createFormats(reading: ClockReading) {
@@ -155,5 +184,6 @@ internal class ClockView(context: Context, attrs: AttributeSet?) : ViewGroup(con
         const val TIME_24_HOUR = "Hm"
         const val TIME_12_HOUR = "hm"
         const val DATE = "EEEEdMMMM"
+        const val AM_PM_SIZE = 0.4f
     }
 }

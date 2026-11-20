@@ -58,6 +58,14 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun appliesTo(model: Appearance, context: AppearanceContext) = model.tileGeometry.verticalAlignment != Vertical.TOP
     }
 
+    /** About how wide a tile is, in dp (NETTV fork): smaller fits more apps in a row. */
+    data object TileSize : AppearanceOption<Int> {
+        override val values: List<Int> = listOf(110, 130, 154, 180, 210)
+        override fun get(model: Appearance) = model.tileGeometry.tileWidthDp
+        override fun set(model: Appearance, value: Int) =
+            model.copy(tileGeometry = model.tileGeometry.copy(tileWidthDp = value))
+    }
+
     /** How round the tiles' corners are: radii in dp, then round ends. */
     data object CornerRadius : AppearanceOption<Corners> {
         override val values: List<Corners> = listOf(0, 4, 8, 12, 16, 24, 32).map { Corners.Radius(it) } + Corners.Pill

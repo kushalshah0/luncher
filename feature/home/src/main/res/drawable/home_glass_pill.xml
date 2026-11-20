@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Frosted-glass pill behind each status indicator: a faint white gradient, lighter at the top,
+     and a thin light rim. Real blur needs API 31; this is the look without it. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="100dp" />
+    <gradient
+        android:angle="270"
+        android:endColor="#1FFFFFFF"
+        android:startColor="#38FFFFFF" />
+    <stroke
+        android:width="1dp"
+        android:color="#4DFFFFFF" />
+</shape>

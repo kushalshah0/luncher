@@ -77,6 +77,7 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
         AppearanceOption.FullBottomRow -> "tile_full_bottom_row"
         AppearanceOption.CornerRadius -> "tile_corner_radius"
         AppearanceOption.FocusFrame -> "tile_focus_frame"
+        AppearanceOption.TileSize -> "nettv_tile_size"
         AppearanceOption.AppName -> "tile_app_name"
         AppearanceOption.ClockSide -> "clock_side"
         AppearanceOption.TimeSide -> "time_side"

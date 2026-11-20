@@ -2,11 +2,13 @@ package com.luncher.launcher.settings
 
 import android.app.Activity
 import android.app.Dialog
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -58,13 +60,18 @@ internal class BoxRestart(private val activity: Activity) {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             alpha = 0f
-            addView(ProgressBar(activity).apply { isIndeterminate = true })
+            val dp = activity.resources.displayMetrics.density
+            addView(ProgressBar(activity).apply {
+                isIndeterminate = true
+                indeterminateTintList = ColorStateList.valueOf(Color.WHITE)   // not the theme's accent
+            }, LinearLayout.LayoutParams((40 * dp).toInt(), (40 * dp).toInt()))
             addView(TextView(activity).apply {
                 setText(R.string.settings_restarting)
+                textAlignment = View.TEXT_ALIGNMENT_CENTER   // else the theme's start alignment wins
                 setTextColor(Color.WHITE)
                 textSize = 22f
                 typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
-                setPadding(0, (16 * activity.resources.displayMetrics.density).toInt(), 0, 0)
+                setPadding(0, (20 * dp).toInt(), 0, 0)
             })
         }
         setContentView(content)

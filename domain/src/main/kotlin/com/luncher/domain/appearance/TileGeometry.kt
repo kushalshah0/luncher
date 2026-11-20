@@ -17,12 +17,12 @@ data class TileGeometry(
     /** Where the rows go in the height. */
     val verticalAlignment: VerticalAlignment = VerticalAlignment.BOTTOM,
     /** Where a row that isn't full goes in the width. */
-    val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.CENTER,
+    val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.LEFT,   // NETTV fork default
     /**
      * With the rows centered or at the bottom, the row that isn't full is the first one rather than
      * the last, so the bottom row is always full. Nothing changes with the rows at the top.
      */
-    val fullBottomRow: Boolean = true,
+    val fullBottomRow: Boolean = false,   // NETTV fork default
     /**
      * When an app's name shows below its tile. Shown below the focused one, or below every one,
      * the rows are further apart to leave it room, and the last row has the room below it too, so a name never covers

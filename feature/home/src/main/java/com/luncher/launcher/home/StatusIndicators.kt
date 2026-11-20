@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.net.ConnectivityManager
-import android.net.TrafficStats
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Environment
@@ -15,11 +14,10 @@ import android.os.storage.StorageManager
 import android.view.View
 import android.widget.TextView
 import java.io.File
-import java.util.Locale
 
 /**
  * The home screen's status pills (NETTV fork), beside the settings entry: the network (Wi-Fi,
- * Ethernet, or offline), the download speed, the free memory, and USB
+ * Ethernet, or offline), the free memory, and USB
  * while a USB drive is mounted. Read every [INTERVAL_MS] while the home screen is visible: the
  * screen calls [start] and [stop] with the clock's, so a hidden home screen does no work.
  *
@@ -29,7 +27,6 @@ import java.util.Locale
 internal class StatusIndicators(row: View) {
 
     val network: TextView = row.findViewById(R.id.home_status_network)
-    private val speed: TextView = row.findViewById(R.id.home_status_speed)
     val ram: TextView = row.findViewById(R.id.home_status_ram)
     private val usb: TextView = row.findViewById(R.id.home_status_usb)
 
@@ -40,9 +37,6 @@ internal class StatusIndicators(row: View) {
     private val activities = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
     private val memory = ActivityManager.MemoryInfo()
 
-    // The last reading of the received and sent bytes, for the speeds; -1 until the first.
-    private var lastRx = -1L
-    private var lastAt = 0L
     private var networkIcon = 0
 
     /** While the clean-up's message shows (elapsedRealtime), the RAM pill isn't updated. */
@@ -57,7 +51,6 @@ internal class StatusIndicators(row: View) {
 
     fun start() {
         stop()
-        lastRx = -1L
         tick.run()
     }
 
@@ -65,7 +58,6 @@ internal class StatusIndicators(row: View) {
 
     private fun show() {
         showNetwork()
-        speed.text = speedText()
         if (SystemClock.elapsedRealtime() >= ramMessageUntil) ram.text = "${freeMb()} MB"
         usb.visibility = if (usbMounted()) View.VISIBLE else View.GONE
     }
@@ -90,20 +82,6 @@ internal class StatusIndicators(row: View) {
         }
         network.text = text
     }
-
-    /** Download speed since the last reading ("1.2 MB/s"); zero on the first, or where the device doesn't count. */
-    private fun speedText(): String {
-        val rx = TrafficStats.getTotalRxBytes()
-        val now = SystemClock.elapsedRealtime()
-        val since = now - lastAt
-        val down = if (lastRx < 0 || rx < 0 || since <= 0) 0 else (rx - lastRx).coerceAtLeast(0) * 1000 / since
-        lastRx = rx
-        lastAt = now
-        return rate(down)
-    }
-
-    private fun rate(perSecond: Long): String =
-        if (perSecond >= MB) String.format(Locale.US, "%.1f MB/s", perSecond.toDouble() / MB) else "${perSecond / KB} KB/s"
 
     /** Whether a removable drive is mounted; StorageVolume lists them from API 24 only. */
     private fun usbMounted(): Boolean {
@@ -141,7 +119,6 @@ internal class StatusIndicators(row: View) {
 
     private companion object {
         const val INTERVAL_MS = 2_000L
-        const val KB = 1024L
         const val MB = 1024L * 1024L
         /** The root script clears within a second of seeing the request; the result is read after. */
         const val CLEAN_WAIT_MS = 2_500L

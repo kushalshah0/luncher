@@ -5,6 +5,12 @@
          permissions, granted at install. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- The Wi-Fi picker (WifiPicker): connect to a network, and list them (scan results need the
+         location permission from API 23; asked for when the picker opens). -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- The RAM pill's clean-up: stops other apps' background processes. -->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
     <!-- As the app declares it, so the JVM tests, which have no app manifest, follow a
          right-to-left language as the app does. -->

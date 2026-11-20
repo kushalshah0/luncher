@@ -63,8 +63,7 @@ class HomeActivity : Activity() {
     private lateinit var settingsEntry: View
     private lateinit var statusView: View
     private lateinit var status: StatusIndicators
-    private lateinit var focusedName: TextView
-    private val spot = IntArray(2)
+    private lateinit var wifiPicker: WifiPicker
     private lateinit var empty: TextView
     private lateinit var move: MoveMode
     private lateinit var wallpaper: HomeWallpaper
@@ -136,14 +135,9 @@ class HomeActivity : Activity() {
         settingsEntry.setOnClickListener { openSettings() }
         statusView = findViewById(R.id.home_status)
         status = StatusIndicators(findViewById(R.id.home_status))
-        clockView.greeting = findViewById(R.id.home_greeting)
-        focusedName = findViewById(R.id.home_focused_name)
-        // The focused app's name follows the focus and the tiles' scrolling and layout.
-        window.decorView.viewTreeObserver.apply {
-            addOnGlobalFocusChangeListener { _, _ -> placeFocusedName() }
-            addOnScrollChangedListener { placeFocusedName() }
-            addOnGlobalLayoutListener { placeFocusedName() }
-        }
+        wifiPicker = WifiPicker(this)
+        status.network.setOnClickListener { wifiPicker.show() }
+        status.ram.setOnClickListener { status.cleanMemory() }
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) { tiles.frost = it }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
@@ -173,36 +167,6 @@ class HomeActivity : Activity() {
     // it was hidden (a picture deleted from the tiles that showed it) at once, not only once the
     // panel closes; and while it's started, the listeners show every change, so resuming needs no
     // read. Moving an app ended as it stopped.
-    /**
-     * NETTV fork: shows the focused tile's app name, large, just above the topmost row of tiles on
-     * screen, never over the top bar; hidden while no tile has the focus or an app is being moved.
-     */
-    private fun placeFocusedName() {
-        val tile = currentFocus as? AppTileView
-        if (tile == null || move.active || tiles.childCount == 0) {
-            focusedName.visibility = View.INVISIBLE
-            return
-        }
-        focusedName.text = tile.contentDescription
-        (focusedName.parent as View).getLocationInWindow(spot)
-        val originY = spot[1]
-        tiles.getLocationInWindow(spot)
-        val tilesX = spot[0]
-        var top = Int.MAX_VALUE
-        val areaTop = spot[1]
-        for (i in 0 until tiles.childCount) {
-            tiles.getChildAt(i).getLocationInWindow(spot)
-            if (spot[1] < top) top = spot[1]
-        }
-        top = maxOf(top, areaTop)
-        topBar.getLocationInWindow(spot)
-        val barBottom = spot[1] + topBar.height
-        val y = maxOf(top - focusedName.height - FOCUSED_NAME_GAP_PX, barBottom)
-        focusedName.translationX = (tilesX + tiles.paddingLeft).toFloat()
-        focusedName.translationY = (y - originY).toFloat()
-        focusedName.visibility = View.VISIBLE
-    }
-
     override fun onResume() {
         super.onResume()
         window.decorView.postDelayed(ownAnimations, OWN_ANIMATIONS_AFTER)
@@ -239,6 +203,24 @@ class HomeActivity : Activity() {
         arrangements.removeListener(showArrangement)
         customizations.removeListener(showAppChanges)
         installedApps.removeListener(showAppChanges)
+    }
+
+    /** A state list: [accent] in [shape] while focused, the glass drawable [glass] otherwise. */
+    private fun glassWithFocus(shape: Int, glass: Int, accent: Int) = StateListDrawable().apply {
+        addState(intArrayOf(android.R.attr.state_focused), GradientDrawable().apply {
+            this.shape = shape
+            if (shape == GradientDrawable.RECTANGLE) cornerRadius = 1000f
+            setColor(accent)
+        })
+        addState(intArrayOf(), getDrawable(glass))
+    }
+
+    // The Wi-Fi picker asked for the location permission: open it again once it's granted.
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == WifiPicker.REQUEST_LOCATION && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            wifiPicker.show()
+        }
     }
 
     // Home while the home screen is in front.
@@ -301,11 +283,10 @@ class HomeActivity : Activity() {
         shownTheme = theme
         val roles = colorRoles(theme)
         tiles.accent = roles.homeAccent
-        settingsEntry.background = StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_focused), GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(roles.homeAccent)
-            })
+        // NETTV fork: frosted glass when not focused, the accent when focused; the clickable pills too.
+        settingsEntry.background = glassWithFocus(GradientDrawable.OVAL, R.drawable.home_glass_circle, roles.homeAccent)
+        for (pill in listOf(status.network, status.ram)) {
+            pill.background = glassWithFocus(GradientDrawable.RECTANGLE, R.drawable.home_glass_pill, roles.homeAccent)
         }
         menu?.style(roles, tiles.tileStyle.corners)
         working.roles = roles
@@ -489,6 +470,3 @@ class HomeActivity : Activity() {
 
 /** How long after the home screen is back its window has its own animations again, in ms: Android's transition starts well within it. */
 private const val OWN_ANIMATIONS_AFTER = 1000L
-
-// NETTV fork: between the focused app's name and the top row of tiles.
-private const val FOCUSED_NAME_GAP_PX = 24

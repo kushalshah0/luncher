@@ -18,4 +18,13 @@
         <item name="android:textSize">@dimen/home_status_text</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
+
+    <!-- A pill that does something on OK: reached with the D-pad like the settings entry; HomeActivity
+         gives it the accent as its focused look. -->
+    <style name="HomeStatusPill.Clickable">
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:stateListAnimator">@animator/home_settings_press</item>
+    </style>
 </resources>

@@ -18,18 +18,6 @@
              focusable itself: D-pad Up from the tiles reaches only what's focusable in it. While
              the user moves an app, the mode's title and key hint take the place of the clock and
              the settings entry. -->
-        <!-- "GOOD EVENING" above the clock (NETTV fork); ClockView sets it with the time. -->
-        <TextView
-            android:id="@+id/home_greeting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingLeft="@dimen/screen_padding_horizontal"
-            android:paddingTop="@dimen/home_padding_vertical"
-            android:letterSpacing="0.2"
-            android:textAllCaps="true"
-            android:textColor="@color/text_secondary"
-            android:textSize="@dimen/home_greeting_text" />
-
         <com.luncher.launcher.home.TopBarView
             android:id="@+id/home_top_bar"
             android:layout_width="match_parent"
@@ -37,7 +25,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingLeft="@dimen/screen_padding_horizontal"
-            android:paddingTop="4dp"
+            android:paddingTop="@dimen/home_padding_vertical"
             android:paddingRight="@dimen/screen_padding_horizontal">
 
             <!-- Time and date share a baseline, side by side in the order the appearance gives. -->
@@ -107,15 +95,15 @@
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/home_status_network"
-                    style="@style/HomeStatusPill"
+                    style="@style/HomeStatusPill.Clickable"
                     android:drawableLeft="@drawable/home_ic_wifi" />
                 <TextView
                     android:id="@+id/home_status_speed"
                     style="@style/HomeStatusPill"
-                    android:drawableLeft="@drawable/home_ic_speed" />
+                    android:drawableLeft="@drawable/home_ic_updown" />
                 <TextView
                     android:id="@+id/home_status_ram"
-                    style="@style/HomeStatusPill"
+                    style="@style/HomeStatusPill.Clickable"
                     android:drawableLeft="@drawable/home_ic_memory" />
                 <TextView
                     android:id="@+id/home_status_usb"
@@ -151,18 +139,6 @@
             android:paddingRight="@dimen/screen_padding_horizontal"
             android:paddingBottom="@dimen/home_padding_vertical" />
     </LinearLayout>
-
-    <!-- The focused app's name, large, just above the tiles (NETTV fork): HomeActivity moves it. -->
-    <com.luncher.launcher.home.OutlinedTextView
-        android:id="@+id/home_focused_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|left"
-        android:includeFontPadding="false"
-        android:singleLine="true"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/home_focused_name_text"
-        android:visibility="invisible" />
 
     <com.luncher.launcher.home.OutlinedTextView
         android:id="@+id/home_empty"

@@ -30,8 +30,6 @@
     <dimen name="home_menu_entry_padding">16dp</dimen>
     <dimen name="home_menu_icon_gap">16dp</dimen>
     <dimen name="home_menu_gap">12dp</dimen>
-    <!-- NETTV fork: greeting, status pills, focused app's name. -->
-    <dimen name="home_greeting_text">13sp</dimen>
+    <!-- NETTV fork: status pills. -->
     <dimen name="home_status_text">15sp</dimen>
-    <dimen name="home_focused_name_text">40sp</dimen>
 </resources>

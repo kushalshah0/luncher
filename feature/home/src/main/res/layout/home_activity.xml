@@ -102,13 +102,13 @@
                     android:drawableLeft="@drawable/home_ic_memory" />
                 <TextView
                     android:id="@+id/home_status_usb"
-                    style="@style/HomeStatusPill"
+                    style="@style/HomeStatusPill.Icon"
                     android:drawableLeft="@drawable/home_ic_usb"
                     android:visibility="gone" />
                 <!-- Only while a VPN is connected, e.g. WireGuard's tunnel. -->
                 <TextView
                     android:id="@+id/home_status_vpn"
-                    style="@style/HomeStatusPill"
+                    style="@style/HomeStatusPill.Icon"
                     android:contentDescription="@string/home_status_vpn"
                     android:drawableLeft="@drawable/home_ic_vpn"
                     android:visibility="gone" />

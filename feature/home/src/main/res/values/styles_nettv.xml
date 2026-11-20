@@ -4,19 +4,27 @@
     <style name="HomeStatusPill">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginLeft">10dp</item>
+        <item name="android:layout_marginLeft">14dp</item>
         <item name="android:background">@drawable/home_glass_pill</item>
-        <item name="android:drawablePadding">8dp</item>
+        <item name="android:drawablePadding">14dp</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:includeFontPadding">false</item>
-        <item name="android:paddingLeft">14dp</item>
-        <item name="android:paddingRight">16dp</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
+        <item name="android:minHeight">@dimen/home_status_height</item>
+        <item name="android:paddingLeft">22dp</item>
+        <item name="android:paddingRight">26dp</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@color/home_pill_text</item>
         <item name="android:textSize">@dimen/home_status_text</item>
         <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- An icon alone (USB, VPN): a glass disc as tall as the other pills. -->
+    <style name="HomeStatusPill.Icon">
+        <item name="android:drawablePadding">0dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minWidth">@dimen/home_status_height</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
     </style>
 
     <!-- A pill that does something on OK: reached with the D-pad like the settings entry; HomeActivity

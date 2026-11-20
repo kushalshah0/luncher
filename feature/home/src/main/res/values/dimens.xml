@@ -32,5 +32,7 @@
     <dimen name="home_menu_gap">12dp</dimen>
     <!-- NETTV fork: status pills; the top bar closer to the top. -->
     <dimen name="home_top_bar_padding_top">16dp</dimen>
-    <dimen name="home_status_text">15sp</dimen>
+    <dimen name="home_status_text">18sp</dimen>
+    <!-- The status pills' height: within the clock's, so the top bar, and the tiles, stay put. -->
+    <dimen name="home_status_height">54dp</dimen>
 </resources>

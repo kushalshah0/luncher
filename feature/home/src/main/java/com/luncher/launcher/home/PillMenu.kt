@@ -179,6 +179,7 @@ internal class PillMenu(private val activity: Activity) {
                 field.inputType = InputType.TYPE_CLASS_TEXT or
                     (if (shown) InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD else InputType.TYPE_TEXT_VARIATION_PASSWORD)
                 field.typeface = Typeface.DEFAULT
+                field.minHeight = dp(ROW_HEIGHT_DP)   // a new input type sets it to 1 line's
                 field.setSelection(field.text.length)
                 setImageResource(if (shown) UiR.drawable.icon_eye_off else R.drawable.home_ic_eye)
                 contentDescription = if (shown) "Hide password" else "Show password"

@@ -64,6 +64,7 @@ class HomeActivity : Activity() {
     private lateinit var statusView: View
     private lateinit var status: StatusIndicators
     private lateinit var wifiPicker: WifiPicker
+    private lateinit var vpnMenu: VpnMenu
     private lateinit var empty: TextView
     private lateinit var move: MoveMode
     private lateinit var wallpaper: HomeWallpaper
@@ -138,6 +139,9 @@ class HomeActivity : Activity() {
         wifiPicker = WifiPicker(this)
         status.network.setOnClickListener { wifiPicker.show(status.network) }
         status.ram.setOnClickListener { status.cleanMemory() }
+        vpnMenu = VpnMenu(this)
+        status.vpn.setOnClickListener { vpnMenu.show(status.vpn) }
+        status.usb.setOnClickListener { status.openStorage() }
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) { tiles.frost = it }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
@@ -215,11 +219,14 @@ class HomeActivity : Activity() {
         addState(intArrayOf(), getDrawable(glass))
     }
 
-    // The Wi-Fi picker asked for the location permission: open it again once it's granted.
+    // The Wi-Fi picker asked for the location permission, or the VPN menu for WireGuard's: do what
+    // it was asked for once it's granted.
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == WifiPicker.REQUEST_LOCATION && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            wifiPicker.showAgain()
+        if (grantResults.firstOrNull() != android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        when (requestCode) {
+            WifiPicker.REQUEST_LOCATION -> wifiPicker.showAgain()
+            VpnMenu.REQUEST_CONTROL_TUNNELS -> vpnMenu.turnOff()
         }
     }
 
@@ -285,7 +292,7 @@ class HomeActivity : Activity() {
         tiles.accent = roles.homeAccent
         // NETTV fork: the clickable pills (settings among them) are frosted glass, and white with
         // black text and icon while focused, whatever the accent.
-        for (pill in listOf(status.network, status.ram, settingsEntry as TextView)) {
+        for (pill in listOf(status.network, status.ram, status.usb, status.vpn, settingsEntry as TextView)) {
             pill.background = glassWithFocus(GradientDrawable.RECTANGLE, R.drawable.home_glass_pill, android.graphics.Color.WHITE)
             if (Build.VERSION.SDK_INT >= 23) pill.compoundDrawableTintList = pill.textColors
         }

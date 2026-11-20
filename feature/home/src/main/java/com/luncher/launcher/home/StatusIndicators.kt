@@ -1,7 +1,9 @@
 package com.luncher.launcher.home
 
 import android.app.ActivityManager
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -12,6 +14,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.os.storage.StorageManager
+import android.provider.Settings
+import android.widget.Toast
 import android.view.View
 import android.widget.TextView
 import java.io.File
@@ -22,6 +26,8 @@ import java.io.File
  * is connected. Read every [INTERVAL_MS] while the home screen is visible: the
  * screen calls [start] and [stop] with the clock's, so a hidden home screen does no work.
  *
+ * [openStorage] (OK on the USB pill) opens the TV's storage settings.
+ *
  * [cleanMemory] (OK on the RAM pill) stops other apps' background processes, asks the box's root
  * script to clear the recent apps too ([CLEAR_REQUEST]), and shows how much memory it freed.
  */
@@ -29,8 +35,8 @@ internal class StatusIndicators(row: View) {
 
     val network: TextView = row.findViewById(R.id.home_status_network)
     val ram: TextView = row.findViewById(R.id.home_status_ram)
-    private val usb: TextView = row.findViewById(R.id.home_status_usb)
-    private val vpn: TextView = row.findViewById(R.id.home_status_vpn)
+    val usb: TextView = row.findViewById(R.id.home_status_usb)
+    val vpn: TextView = row.findViewById(R.id.home_status_vpn)
 
     private val context: Context = row.context.applicationContext
     private val handler = Handler(Looper.getMainLooper())
@@ -103,6 +109,23 @@ internal class StatusIndicators(row: View) {
     }
 
     /**
+     * The TV's storage settings (Storage & reset), by package: some firmwares keep a phone-style
+     * Settings app that answers the same action, and crashes (SettingsActivity in :feature:settings).
+     */
+    fun openStorage() {
+        val storage = Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        for (intent in listOf(Intent(storage).setPackage(TV_SETTINGS), storage)) {
+            try {
+                context.startActivity(intent)
+                return
+            } catch (e: ActivityNotFoundException) {
+                // The next one.
+            }
+        }
+        Toast.makeText(context, "No storage settings on this device", Toast.LENGTH_SHORT).show()
+    }
+
+    /**
      * Frees memory: stops every other app's background processes (Android lets a launcher do that),
      * and leaves [CLEAR_REQUEST] for the box's root script, which also clears the recent apps and
      * blinks the front LED. The pill pulses with "Cleaning…", then shows what was freed.
@@ -137,5 +160,6 @@ internal class StatusIndicators(row: View) {
         const val CLEAN_MESSAGE_MS = 3_000L
         /** File in the app's external files folder that the box's remote-keys.sh script watches. */
         const val CLEAR_REQUEST = "clear-request"
+        const val TV_SETTINGS = "com.android.tv.settings"
     }
 }

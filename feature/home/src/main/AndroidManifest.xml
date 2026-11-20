@@ -11,6 +11,13 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- The RAM pill's clean-up: stops other apps' background processes. -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <!-- The VPN menu (VpnMenu): turns WireGuard's tunnel off. WireGuard's own permission, a
+         dangerous one, asked for the first time; and WireGuard visible (API 30+), to open it. -->
+    <uses-permission android:name="com.wireguard.android.permission.CONTROL_TUNNELS" />
+
+    <queries>
+        <package android:name="com.wireguard.android" />
+    </queries>
 
     <!-- As the app declares it, so the JVM tests, which have no app manifest, follow a
          right-to-left language as the app does. -->

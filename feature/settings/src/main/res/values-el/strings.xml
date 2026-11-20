@@ -57,7 +57,8 @@
     <string name="settings_android">Ρυθμίσεις Android</string>
     <string name="settings_android_unavailable">Καμία εφαρμογή ρυθμίσεων Android σε αυτή τη συσκευή</string>
     <string name="settings_restart">Επανεκκίνηση</string>
-    <string name="settings_restart_confirm">Πατήστε OK ξανά για επανεκκίνηση</string>
+    <string name="settings_restart_title">Επανεκκίνηση τώρα;</string>
+    <string name="settings_restart_cancel">Άκυρο</string>
     <string name="settings_restarting">Επανεκκίνηση…</string>
     <string name="settings_restart_failed">Η επανεκκίνηση απέτυχε: το σενάριο επανεκκίνησης δεν τρέχει</string>
 

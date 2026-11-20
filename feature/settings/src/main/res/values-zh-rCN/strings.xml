@@ -56,7 +56,8 @@
     <string name="settings_android">Android 设置</string>
     <string name="settings_android_unavailable">未找到 Android 设置</string>
     <string name="settings_restart">重新启动</string>
-    <string name="settings_restart_confirm">再次按确定以重新启动</string>
+    <string name="settings_restart_title">立即重新启动？</string>
+    <string name="settings_restart_cancel">取消</string>
     <string name="settings_restarting">正在重新启动…</string>
     <string name="settings_restart_failed">无法重新启动：重启脚本未运行</string>
     <string name="settings_pictures_hint">长按 OK 可重命名或删除图片</string>

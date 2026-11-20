@@ -57,7 +57,7 @@ class SettingsActivity : Activity() {
             view.findViewById<TextView>(R.id.settings_entry_title).setText(label(entry))
             view.findViewById<ImageView>(R.id.settings_entry_icon).setImageResource(icon(entry))
             view.findViewById<ImageView>(R.id.settings_entry_end).setImageResource(end(entry))
-            view.setOnClickListener { open(entry, view) }
+            view.setOnClickListener { open(entry) }
             entries.addView(view)
         }
     }
@@ -85,12 +85,12 @@ class SettingsActivity : Activity() {
         SettingsEntry.Restart -> 0
     }
 
-    private fun open(entry: SettingsEntry, view: View) = when (entry) {
+    private fun open(entry: SettingsEntry) = when (entry) {
         SettingsEntry.HideApps -> openOwnPanel(Intent(this, HideAppsActivity::class.java))
         SettingsEntry.Appearance -> openOwnPanel(Intent(this, AppearanceActivity::class.java))
         SettingsEntry.SystemSettings -> openSystemSettings()
         SettingsEntry.AndroidSettings -> openAndroidSettings()
-        SettingsEntry.Restart -> restart.press(view.findViewById(R.id.settings_entry_title))
+        SettingsEntry.Restart -> restart.confirm()
     }
 
     /**

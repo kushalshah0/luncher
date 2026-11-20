@@ -57,7 +57,8 @@
     <string name="settings_android">إعدادات Android</string>
     <string name="settings_android_unavailable">لا يوجد تطبيق إعدادات Android على هذا الجهاز</string>
     <string name="settings_restart">إعادة التشغيل</string>
-    <string name="settings_restart_confirm">اضغط موافق مرة أخرى لإعادة التشغيل</string>
+    <string name="settings_restart_title">إعادة التشغيل الآن؟</string>
+    <string name="settings_restart_cancel">إلغاء</string>
     <string name="settings_restarting">جارٍ إعادة التشغيل…</string>
     <string name="settings_restart_failed">تعذّرت إعادة التشغيل: برنامج إعادة التشغيل لا يعمل</string>
 

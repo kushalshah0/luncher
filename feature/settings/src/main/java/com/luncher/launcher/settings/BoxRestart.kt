@@ -5,10 +5,16 @@ import android.app.Dialog
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -20,7 +26,8 @@ import java.io.File
  * script (/system/bin/remote-keys.sh) does: it watches the app's files folder each second, as for
  * the RAM pill's clear-request, and restarts the box when [REQUEST] appears.
  *
- * The first OK asks for a second, in the entry's title, for [CONFIRM_MS]; the second leaves the
+ * OK on the entry opens a small modal over the dimmed screen, white like the home screen's Wi-Fi
+ * and VPN menus: "Restart now?", Cancel (focused, so a stray OK restarts nothing) and Restart. Restart leaves the
  * request and fades in "Restarting…" over everything. If the box is still up after [TIMEOUT_MS],
  * its script isn't running: the request goes, so it can't restart the box out of the blue later.
  */
@@ -28,18 +35,43 @@ internal class BoxRestart(private val activity: Activity) {
 
     private val handler = Handler(Looper.getMainLooper())
     private val request = File(activity.getExternalFilesDir(null), REQUEST)
-    private var armed = false
+    private val density = activity.resources.displayMetrics.density
 
-    fun press(title: TextView) {
-        if (!armed) {
-            armed = true
-            title.setText(R.string.settings_restart_confirm)
-            handler.postDelayed({ armed = false; title.setText(R.string.settings_restart) }, CONFIRM_MS)
-            return
+    /** The modal asking to restart. */
+    fun confirm() {
+        val dialog = Dialog(activity).apply { requestWindowFeature(Window.FEATURE_NO_TITLE) }
+        val cancel = button(R.string.settings_restart_cancel) { dialog.dismiss() }
+        val restart = button(R.string.settings_restart) {
+            dialog.dismiss()
+            restart()
         }
-        armed = false
-        handler.removeCallbacksAndMessages(null)
-        title.setText(R.string.settings_restart)
+        dialog.setContentView(LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(Color.WHITE) }
+            setPadding(dp(24), dp(22), dp(24), dp(20))
+            addView(text(R.string.settings_restart_title, 19f, INK).apply {
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            })
+            addView(LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.END
+                setPadding(0, dp(20), 0, 0)
+                addView(cancel)
+                addView(restart, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    leftMargin = dp(10)
+                })
+            })
+        }, ViewGroup.LayoutParams(dp(WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT))
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))   // the panel's own rounded white
+            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0.6f)
+        }
+        dialog.show()
+        cancel.requestFocus()
+    }
+
+    private fun restart() {
         if (!runCatching { request.createNewFile() || request.exists() }.getOrDefault(false)) {
             failed()
             return
@@ -54,24 +86,51 @@ internal class BoxRestart(private val activity: Activity) {
 
     private fun failed() = Toast.makeText(activity, R.string.settings_restart_failed, Toast.LENGTH_LONG).show()
 
+    /** A pill button: light grey, graphite with white text while focused. */
+    private fun button(label: Int, onClick: () -> Unit) = TextView(activity).apply {
+        setText(label)
+        gravity = Gravity.CENTER
+        textAlignment = View.TEXT_ALIGNMENT_CENTER   // else the theme's start alignment wins
+        textSize = 15f
+        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        setTextColor(ColorStateList(arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()), intArrayOf(Color.WHITE, INK)))
+        minWidth = dp(BUTTON_MIN_WIDTH_DP)
+        minHeight = dp(BUTTON_HEIGHT_DP)
+        setPadding(dp(20), 0, dp(20), 0)
+        background = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_focused), pill(INK))
+            addState(intArrayOf(), pill(FIELD))
+        }
+        isFocusable = true
+        isClickable = true
+        setOnClickListener { onClick() }
+    }
+
+    private fun text(resource: Int, size: Float, color: Int) = TextView(activity).apply {
+        setText(resource)
+        textSize = size
+        setTextColor(color)
+    }
+
+    private fun pill(color: Int) = GradientDrawable().apply { cornerRadius = dp(BUTTON_HEIGHT_DP / 2).toFloat(); setColor(color) }
+
     /** Black over the whole screen, "Restarting…" and a spinner fading in. */
     private fun restarting() = Dialog(activity, android.R.style.Theme_Black_NoTitleBar_Fullscreen).apply {
         val content = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             alpha = 0f
-            val dp = activity.resources.displayMetrics.density
             addView(ProgressBar(activity).apply {
                 isIndeterminate = true
                 indeterminateTintList = ColorStateList.valueOf(Color.WHITE)   // not the theme's accent
-            }, LinearLayout.LayoutParams((40 * dp).toInt(), (40 * dp).toInt()))
+            }, LinearLayout.LayoutParams(dp(40), dp(40)))
             addView(TextView(activity).apply {
                 setText(R.string.settings_restarting)
                 textAlignment = View.TEXT_ALIGNMENT_CENTER   // else the theme's start alignment wins
                 setTextColor(Color.WHITE)
                 textSize = 22f
                 typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
-                setPadding(0, (20 * dp).toInt(), 0, 0)
+                setPadding(0, dp(20), 0, 0)
             })
         }
         setContentView(content)
@@ -80,11 +139,19 @@ internal class BoxRestart(private val activity: Activity) {
         content.animate().alpha(1f).setDuration(FADE_MS).start()
     }
 
+    private fun dp(value: Int) = (value * density).toInt()
+
     companion object {
         /** In the app's external files folder, which the box's root script watches. */
         const val REQUEST = "restart-request"
-        const val CONFIRM_MS = 3_000L
         const val TIMEOUT_MS = 15_000L
         const val FADE_MS = 400L
+        const val WIDTH_DP = 300
+        const val BUTTON_HEIGHT_DP = 40
+        const val BUTTON_MIN_WIDTH_DP = 104
+
+        // Mono graphite, as the home screen's pill menus (PillMenu, in :feature:home).
+        const val INK = 0xFF1C1C1E.toInt()
+        const val FIELD = 0xFFF2F2F7.toInt()
     }
 }

@@ -123,10 +123,11 @@
     <string name="settings_android">Android settings</string>
     <!-- A message, when the device has no such app. -->
     <string name="settings_android_unavailable">No Android settings app on this device</string>
-    <!-- The entry that restarts the box (NETTV fork), after a second OK. -->
+    <!-- The entry that restarts the box (NETTV fork), after a modal asks; also that modal's button. -->
     <string name="settings_restart">Restart</string>
-    <!-- In the Restart entry's place after the first OK, for 3 s. -->
-    <string name="settings_restart_confirm">Press OK again to restart</string>
+    <!-- The modal Restart opens, before anything restarts: its title, and the button that closes it. -->
+    <string name="settings_restart_title">Restart now?</string>
+    <string name="settings_restart_cancel">Cancel</string>
     <!-- Over the whole screen while the box restarts. -->
     <string name="settings_restarting">Restarting…</string>
     <!-- A message, when the box is still up 15 s later. -->

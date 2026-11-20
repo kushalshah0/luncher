@@ -13,6 +13,12 @@ sealed interface SettingsEntry {
     /** Opens the editor of the home screen's appearance. */
     data object Appearance : SettingsEntry
 
-    /** Opens the device's own settings app. */
+    /** Opens the TV's own settings app (com.android.tv.settings), else the device's settings. */
     data object SystemSettings : SettingsEntry
+
+    /**
+     * Opens Android's phone-style settings app (com.android.settings), which some TV firmwares
+     * keep beside the TV's: it has screens the TV's lacks, such as VPN.
+     */
+    data object AndroidSettings : SettingsEntry
 }

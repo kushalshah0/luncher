@@ -46,7 +46,7 @@ class SettingsActivityTest {
 
     @Test
     fun `lists hiding apps, the appearance and the pictures, then the system settings`() {
-        assertEquals(listOf("Hide apps", "Appearance", "System settings"), start().titles().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings"), start().titles().map { it.text.toString() })
     }
 
     @Test
@@ -54,7 +54,7 @@ class SettingsActivityTest {
         val entries = start().entries()
 
         val gaps = entries.zipWithNext { above, below -> below.top - above.bottom }
-        assertEquals(listOf(0, 0), gaps)
+        assertEquals(listOf(0, 0, 0), gaps)
     }
 
     @Test
@@ -71,7 +71,7 @@ class SettingsActivityTest {
         controller.configurationChange().visible()   // Robolectric shows the new window only when told
 
         val activity = controller.get()
-        assertEquals(listOf("Hide apps", "Appearance", "System settings"), activity.titles().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings"), activity.titles().map { it.text.toString() })
         assertTrue(activity.entries().first().isFocused)
     }
 
@@ -158,6 +158,31 @@ class SettingsActivityTest {
 
         assertNull(shadowOf(activity).nextStartedActivity)
         assertEquals("No settings app on this device", ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
+    fun `OK on Android settings opens Android's phone-style settings app, in a task of its own`() {
+        val activity = start()
+
+        activity.entries()[3].requestFocus()
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        val intent = shadowOf(activity).nextStartedActivity
+        assertEquals(Settings.ACTION_SETTINGS, intent.action)
+        assertEquals("com.android.settings", intent.`package`)
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    @Test
+    fun `says so when the device has no Android settings app`() {
+        val activity = start()
+        shadowOf(activity.application).checkActivities(true)
+
+        activity.entries()[3].requestFocus()
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        assertNull(shadowOf(activity).nextStartedActivity)
+        assertEquals("No Android settings app on this device", ShadowToast.getTextOfLatestToast())
     }
 
     // Unlike the home screen (HomeActivityTest), which stays left to right. Persian: a

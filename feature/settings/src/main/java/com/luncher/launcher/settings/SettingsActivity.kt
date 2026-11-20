@@ -65,24 +65,27 @@ class SettingsActivity : Activity() {
         SettingsEntry.HideApps -> R.string.settings_hide_apps
         SettingsEntry.Appearance -> R.string.settings_appearance
         SettingsEntry.SystemSettings -> R.string.settings_system
+        SettingsEntry.AndroidSettings -> R.string.settings_android
     }
 
     private fun icon(entry: SettingsEntry): Int = when (entry) {
         SettingsEntry.HideApps -> UiR.drawable.icon_eye_off
         SettingsEntry.Appearance -> UiR.drawable.icon_palette
         SettingsEntry.SystemSettings -> UiR.drawable.icon_tv
+        SettingsEntry.AndroidSettings -> R.drawable.settings_icon_phone
     }
 
     /** At the entry's end: a screen of Luncher's, or another app. */
     private fun end(entry: SettingsEntry): Int = when (entry) {
         SettingsEntry.HideApps, SettingsEntry.Appearance -> UiR.drawable.icon_chevron
-        SettingsEntry.SystemSettings -> UiR.drawable.icon_open
+        SettingsEntry.SystemSettings, SettingsEntry.AndroidSettings -> UiR.drawable.icon_open
     }
 
     private fun open(entry: SettingsEntry) = when (entry) {
         SettingsEntry.HideApps -> openOwnPanel(Intent(this, HideAppsActivity::class.java))
         SettingsEntry.Appearance -> openOwnPanel(Intent(this, AppearanceActivity::class.java))
         SettingsEntry.SystemSettings -> openSystemSettings()
+        SettingsEntry.AndroidSettings -> openAndroidSettings()
     }
 
     /**
@@ -107,6 +110,20 @@ class SettingsActivity : Activity() {
     }
 
     /**
+     * Android's phone-style settings, by package: wherever ACTION_SETTINGS goes, this entry goes
+     * there. In a task of its own, as [openSystemSettings].
+     */
+    private fun openAndroidSettings() {
+        try {
+            startActivity(
+                Intent(Settings.ACTION_SETTINGS).setPackage(ANDROID_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, R.string.settings_android_unavailable, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
      * The TV's settings, e.g. com.android.tv.settings/.MainSettings, by name: their activity lacks
      * CATEGORY_DEFAULT, so startActivity can't resolve the intent itself.
      */
@@ -114,6 +131,9 @@ class SettingsActivity : Activity() {
         packageManager.queryIntentActivities(tvSettingsIntent(), 0).firstOrNull()?.activityInfo
             ?.let { Intent(Intent.ACTION_MAIN).setClassName(it.packageName, it.name) }
 }
+
+/** Android's phone-style settings app. */
+internal const val ANDROID_SETTINGS = "com.android.settings"
 
 /** What Android TV launchers open for the settings; in the manifest's <queries> too, for API 30+. */
 internal fun tvSettingsIntent(): Intent =

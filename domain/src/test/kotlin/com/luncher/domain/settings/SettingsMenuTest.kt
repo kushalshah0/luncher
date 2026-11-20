@@ -6,9 +6,9 @@ import org.junit.Test
 class SettingsMenuTest {
 
     @Test
-    fun `lists Luncher's own settings, then the system settings`() {
+    fun `lists Luncher's own settings, then the TV's, then Android's`() {
         assertEquals(
-            listOf(SettingsEntry.HideApps, SettingsEntry.Appearance, SettingsEntry.SystemSettings),
+            listOf(SettingsEntry.HideApps, SettingsEntry.Appearance, SettingsEntry.SystemSettings, SettingsEntry.AndroidSettings),
             settingsMenu(),
         )
     }

@@ -52,8 +52,10 @@
     <string name="settings_appearance_reset_text">Κάθε επιλογή επιστρέφει στην προεπιλογή της.</string>
     <string name="settings_appearance_reset_text_background">Κάθε επιλογή επιστρέφει στην προεπιλογή της: η αρχική οθόνη θα μείνει χωρίς εικόνα. Η εικόνα παραμένει στις εικόνες του Luncher.</string>
     <string name="settings_appearance_reset_confirm">Επαναφορά</string>
-    <string name="settings_system">Ρυθμίσεις συστήματος</string>
+    <string name="settings_system">Ρυθμίσεις τηλεόρασης</string>
     <string name="settings_system_unavailable">Καμία εφαρμογή ρυθμίσεων σε αυτή τη συσκευή</string>
+    <string name="settings_android">Ρυθμίσεις Android</string>
+    <string name="settings_android_unavailable">Καμία εφαρμογή ρυθμίσεων Android σε αυτή τη συσκευή</string>
 
     <string name="settings_pictures_hint">Κρατήστε πατημένο το OK σε μια εικόνα για να τη μετονομάσετε ή να τη διαγράψετε</string>
     <string name="settings_background_title">Επεξεργασία φόντου</string>

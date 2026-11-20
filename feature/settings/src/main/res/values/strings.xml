@@ -388,6 +388,7 @@
     <string name="settings_appearance_green">Green</string>
     <string name="settings_appearance_amber">Amber</string>
     <string name="settings_appearance_gray">Gray</string>
+    <string name="settings_appearance_white" translatable="false">White</string>
     <!-- Values of settings_appearance_mode. -->
     <string name="settings_appearance_dark">Dark</string>
     <string name="settings_appearance_light_mode">Light</string>

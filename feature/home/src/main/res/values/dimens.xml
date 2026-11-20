@@ -30,6 +30,7 @@
     <dimen name="home_menu_entry_padding">16dp</dimen>
     <dimen name="home_menu_icon_gap">16dp</dimen>
     <dimen name="home_menu_gap">12dp</dimen>
-    <!-- NETTV fork: status pills. -->
+    <!-- NETTV fork: status pills; the top bar closer to the top. -->
+    <dimen name="home_top_bar_padding_top">16dp</dimen>
     <dimen name="home_status_text">15sp</dimen>
 </resources>

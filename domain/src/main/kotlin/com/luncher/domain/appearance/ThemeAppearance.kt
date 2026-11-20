@@ -7,7 +7,7 @@ package com.luncher.domain.appearance
  * [colorRoles].
  */
 data class ThemeAppearance(
-    val accent: AccentColor = AccentColor.ORANGE,
+    val accent: AccentColor = AccentColor.WHITE,   // NETTV fork: black-and-white by default
     val mode: ThemeMode = ThemeMode.DARK,
 )
 

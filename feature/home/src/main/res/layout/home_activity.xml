@@ -25,7 +25,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingLeft="@dimen/screen_padding_horizontal"
-            android:paddingTop="@dimen/home_padding_vertical"
+            android:paddingTop="@dimen/home_top_bar_padding_top"
             android:paddingRight="@dimen/screen_padding_horizontal">
 
             <!-- Time and date share a baseline, side by side in the order the appearance gives. -->
@@ -112,18 +112,13 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <!-- Opens the settings panel. Focusable, so Up from the first row of tiles reaches it; it dips
-                 while OK is held on it (home_settings_press.xml). -->
-            <ImageView
+            <!-- Opens the settings panel (NETTV fork: a pill like the status ones, gear and "Settings").
+                 Focusable, so Up from the first row of tiles reaches it; it dips while OK is held. -->
+            <TextView
                 android:id="@+id/home_settings"
-                android:layout_width="@dimen/home_settings_size"
-                android:layout_height="@dimen/home_settings_size"
-                android:contentDescription="@string/home_settings"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:padding="@dimen/home_settings_padding"
-                android:src="@drawable/home_settings"
-                android:stateListAnimator="@animator/home_settings_press" />
+                style="@style/HomeStatusPill.Clickable"
+                android:drawableLeft="@drawable/home_ic_settings"
+                android:text="@string/home_settings" />
         </com.luncher.launcher.home.TopBarView>
 
         <!-- Tiles may zoom past the padding, and scroll through it up to the top bar. -->

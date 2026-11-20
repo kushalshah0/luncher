@@ -136,7 +136,7 @@ class HomeActivity : Activity() {
         statusView = findViewById(R.id.home_status)
         status = StatusIndicators(findViewById(R.id.home_status))
         wifiPicker = WifiPicker(this)
-        status.network.setOnClickListener { wifiPicker.show() }
+        status.network.setOnClickListener { wifiPicker.show(status.network) }
         status.ram.setOnClickListener { status.cleanMemory() }
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) { tiles.frost = it }
         working = HomeWorking(this, graph.wallpaper, tileImages)
@@ -219,7 +219,7 @@ class HomeActivity : Activity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == WifiPicker.REQUEST_LOCATION && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            wifiPicker.show()
+            wifiPicker.showAgain()
         }
     }
 
@@ -283,10 +283,11 @@ class HomeActivity : Activity() {
         shownTheme = theme
         val roles = colorRoles(theme)
         tiles.accent = roles.homeAccent
-        // NETTV fork: frosted glass when not focused, the accent when focused; the clickable pills too.
-        settingsEntry.background = glassWithFocus(GradientDrawable.OVAL, R.drawable.home_glass_circle, roles.homeAccent)
-        for (pill in listOf(status.network, status.ram)) {
-            pill.background = glassWithFocus(GradientDrawable.RECTANGLE, R.drawable.home_glass_pill, roles.homeAccent)
+        // NETTV fork: the clickable pills (settings among them) are frosted glass, and white with
+        // black text and icon while focused, whatever the accent.
+        for (pill in listOf(status.network, status.ram, settingsEntry as TextView)) {
+            pill.background = glassWithFocus(GradientDrawable.RECTANGLE, R.drawable.home_glass_pill, android.graphics.Color.WHITE)
+            if (Build.VERSION.SDK_INT >= 23) pill.compoundDrawableTintList = pill.textColors
         }
         menu?.style(roles, tiles.tileStyle.corners)
         working.roles = roles

@@ -14,7 +14,7 @@
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingBottom">8dp</item>
         <item name="android:singleLine">true</item>
-        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:textColor">@color/home_pill_text</item>
         <item name="android:textSize">@dimen/home_status_text</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>

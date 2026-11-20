@@ -25,6 +25,8 @@ enum class AccentColor(
     GREEN(0xFF43A047.argb, 0xFF002106.argb, 0xFF00390F.argb, 0xFF00531A.argb, 0xFF006E25.argb, 0xFF78DC77.argb, 0xFF94F990.argb),
     AMBER(0xFFFFB300.argb, 0xFF281900.argb, 0xFF432C00.argb, 0xFF604100.argb, 0xFF7F5700.argb, 0xFFF8BD2A.argb, 0xFFFFDEA6.argb),
     GRAY(0xFF9AA0A8.argb, 0xFF191C20.argb, 0xFF2E3135.argb, 0xFF44474C.argb, 0xFF5C5F64.argb, 0xFFC4C6CC.argb, 0xFFE0E2E8.argb),
+    /** NETTV fork: black-and-white focus, as TV home screens draw it; neutral tones for the menus. */
+    WHITE(0xFFFFFFFF.argb, 0xFF1A1C1E.argb, 0xFF2F3033.argb, 0xFF46474A.argb, 0xFF5D5E61.argb, 0xFFC6C6C9.argb, 0xFFE2E2E5.argb),
 }
 
 private val Long.argb: Int get() = toInt()

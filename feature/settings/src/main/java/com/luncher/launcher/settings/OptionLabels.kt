@@ -150,6 +150,7 @@ private fun accent(accent: AccentColor): Int = when (accent) {
     AccentColor.GREEN -> R.string.settings_appearance_green
     AccentColor.AMBER -> R.string.settings_appearance_amber
     AccentColor.GRAY -> R.string.settings_appearance_gray
+    AccentColor.WHITE -> R.string.settings_appearance_white
 }
 
 private fun mode(mode: ThemeMode): Int = when (mode) {

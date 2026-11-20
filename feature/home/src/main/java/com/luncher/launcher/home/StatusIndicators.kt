@@ -18,8 +18,8 @@ import java.io.File
 import java.util.Locale
 
 /**
- * The home screen's status pills (NETTV fork), beside the settings entry: the network (the Wi-Fi
- * network's name, Ethernet, or offline), the download and upload speed, the free memory, and USB
+ * The home screen's status pills (NETTV fork), beside the settings entry: the network (Wi-Fi,
+ * Ethernet, or offline), the download speed, the free memory, and USB
  * while a USB drive is mounted. Read every [INTERVAL_MS] while the home screen is visible: the
  * screen calls [start] and [stop] with the clock's, so a hidden home screen does no work.
  *
@@ -42,7 +42,6 @@ internal class StatusIndicators(row: View) {
 
     // The last reading of the received and sent bytes, for the speeds; -1 until the first.
     private var lastRx = -1L
-    private var lastTx = -1L
     private var lastAt = 0L
     private var networkIcon = 0
 
@@ -82,7 +81,7 @@ internal class StatusIndicators(row: View) {
         val (icon, text) = when {
             info == null || !info.isConnected -> R.drawable.home_ic_wifi_off to "Offline"
             info.type == ConnectivityManager.TYPE_ETHERNET -> R.drawable.home_ic_ethernet to "Ethernet"
-            info.type == ConnectivityManager.TYPE_WIFI -> R.drawable.home_ic_wifi to wifiName()
+            info.type == ConnectivityManager.TYPE_WIFI -> R.drawable.home_ic_wifi to "Wi-Fi"
             else -> R.drawable.home_ic_wifi to "Online"
         }
         if (icon != networkIcon) {   // only when it changes: setting a drawable lays the pill out again
@@ -92,25 +91,15 @@ internal class StatusIndicators(row: View) {
         network.text = text
     }
 
-    /** The connected Wi-Fi network's name, without Android's quotes; "Wi-Fi" where it's hidden. */
-    @Suppress("DEPRECATION")
-    private fun wifiName(): String {
-        val ssid = wifi.connectionInfo?.ssid.orEmpty().removeSurrounding("\"")
-        return if (ssid.isBlank() || ssid == "<unknown ssid>") "Wi-Fi" else ssid
-    }
-
-    /** "↓ 1.2 MB/s  ↑ 24 KB/s" since the last reading; zeros on the first, or where the device doesn't count. */
+    /** Download speed since the last reading ("1.2 MB/s"); zero on the first, or where the device doesn't count. */
     private fun speedText(): String {
         val rx = TrafficStats.getTotalRxBytes()
-        val tx = TrafficStats.getTotalTxBytes()
         val now = SystemClock.elapsedRealtime()
         val since = now - lastAt
         val down = if (lastRx < 0 || rx < 0 || since <= 0) 0 else (rx - lastRx).coerceAtLeast(0) * 1000 / since
-        val up = if (lastTx < 0 || tx < 0 || since <= 0) 0 else (tx - lastTx).coerceAtLeast(0) * 1000 / since
         lastRx = rx
-        lastTx = tx
         lastAt = now
-        return "↓ ${rate(down)}   ↑ ${rate(up)}"
+        return rate(down)
     }
 
     private fun rate(perSecond: Long): String =

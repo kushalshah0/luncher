@@ -28,6 +28,9 @@ import java.io.File
  *
  * [openStorage] (OK on the USB pill) opens the TV's storage settings.
  *
+ * The remote's Apps button clears the apps too, through the box's script: the RAM pill shows what
+ * it freed ([APPS_CLEARED]).
+ *
  * [cleanMemory] (OK on the RAM pill) stops other apps' background processes, asks the box's root
  * script to clear the recent apps too ([CLEAR_REQUEST]), and shows how much memory it freed.
  */
@@ -66,6 +69,7 @@ internal class StatusIndicators(row: View) {
 
     private fun show() {
         showNetwork()
+        showAppsCleared()
         if (SystemClock.elapsedRealtime() >= ramMessageUntil) ram.text = "${freeMb()} MB"
         usb.visibility = if (usbMounted()) View.VISIBLE else View.GONE
         vpn.visibility = if (vpnConnected()) View.VISIBLE else View.GONE
@@ -132,24 +136,46 @@ internal class StatusIndicators(row: View) {
      */
     fun cleanMemory() {
         val before = freeMb()
-        ramMessageUntil = SystemClock.elapsedRealtime() + CLEAN_MESSAGE_MS + CLEAN_WAIT_MS
-        ram.text = "Cleaning…"
-        ram.animate().scaleX(1.12f).scaleY(1.12f).setDuration(150).withEndAction {
-            ram.animate().scaleX(1f).scaleY(1f).setDuration(250).start()
-        }.start()
+        showCleaning(CLEAN_WAIT_MS)
         Thread {
             context.packageManager.getInstalledApplications(0)
                 .filter { it.packageName != context.packageName && it.flags and ApplicationInfo.FLAG_PERSISTENT == 0 }
                 .forEach { runCatching { activities.killBackgroundProcesses(it.packageName) } }
             runCatching { File(context.getExternalFilesDir(null), CLEAR_REQUEST).createNewFile() }
         }.start()
-        handler.postDelayed({
-            val freed = (freeMb() - before).coerceAtLeast(0)
-            ram.text = "+$freed MB freed"
-            ram.animate().alpha(0.4f).setDuration(120).withEndAction {
-                ram.animate().alpha(1f).setDuration(200).start()
-            }.start()
-        }, CLEAN_WAIT_MS)
+        handler.postDelayed({ showFreed((freeMb() - before).coerceAtLeast(0)) }, CLEAN_WAIT_MS)
+    }
+
+    /**
+     * The remote's Apps button cleared the apps: the box's root script leaves how many MB it freed
+     * in [APPS_CLEARED], and the pill shows it as after its own clean-up, the next time the home
+     * screen is visible. Not if it's older than [APPS_CLEARED_STALE_MS]: that was a while ago.
+     */
+    private fun showAppsCleared() {
+        val report = File(context.getExternalFilesDir(null) ?: return, APPS_CLEARED)
+        if (!report.exists()) return
+        val freed = runCatching { report.readText().trim().toLong() }.getOrNull()
+        val fresh = System.currentTimeMillis() - report.lastModified() < APPS_CLEARED_STALE_MS
+        report.delete()
+        if (freed == null || !fresh) return
+        showCleaning(REPORT_WAIT_MS)
+        handler.postDelayed({ showFreed(freed) }, REPORT_WAIT_MS)
+    }
+
+    /** "Cleaning…" with a pulse, for [waitMs]; the pill shows no free memory till the message after it ends. */
+    private fun showCleaning(waitMs: Long) {
+        ramMessageUntil = SystemClock.elapsedRealtime() + waitMs + CLEAN_MESSAGE_MS
+        ram.text = "Cleaning…"
+        ram.animate().scaleX(1.12f).scaleY(1.12f).setDuration(150).withEndAction {
+            ram.animate().scaleX(1f).scaleY(1f).setDuration(250).start()
+        }.start()
+    }
+
+    private fun showFreed(freed: Long) {
+        ram.text = "+$freed MB freed"
+        ram.animate().alpha(0.4f).setDuration(120).withEndAction {
+            ram.animate().alpha(1f).setDuration(200).start()
+        }.start()
     }
 
     private companion object {
@@ -160,6 +186,11 @@ internal class StatusIndicators(row: View) {
         const val CLEAN_MESSAGE_MS = 3_000L
         /** File in the app's external files folder that the box's remote-keys.sh script watches. */
         const val CLEAR_REQUEST = "clear-request"
+        /** File the box's root script leaves after the remote's Apps button: the MB it freed. */
+        const val APPS_CLEARED = "apps-cleared"
+        const val APPS_CLEARED_STALE_MS = 60_000L
+        /** How long "Cleaning…" shows before the Apps button's result: it's done already. */
+        const val REPORT_WAIT_MS = 800L
         const val TV_SETTINGS = "com.android.tv.settings"
     }
 }

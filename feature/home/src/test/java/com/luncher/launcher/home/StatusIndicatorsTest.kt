@@ -4,10 +4,15 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.NetworkInfo
+import android.os.Looper
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import java.io.File
+import java.time.Duration
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -28,6 +33,36 @@ class StatusIndicatorsTest {
         for (id in listOf(R.id.home_status_network, R.id.home_status_ram, R.id.home_status_usb, R.id.home_status_vpn)) {
             addView(TextView(context).also { it.id = id; it.visibility = View.GONE })
         }
+    }
+
+    private fun ramPill() = row.findViewById<TextView>(R.id.home_status_ram).text.toString()
+
+    /** What the box's root script leaves after the remote's Apps button cleared the apps. */
+    private fun appsCleared(freedMb: Int, agoMs: Long = 0) = File(context.getExternalFilesDir(null), "apps-cleared").apply {
+        writeText("$freedMb\n")
+        setLastModified(System.currentTimeMillis() - agoMs)
+    }
+
+    @Test
+    fun `the RAM pill shows what the remote's Apps button freed`() {
+        val report = appsCleared(120)
+
+        StatusIndicators(row).start()
+
+        assertEquals("Cleaning…", ramPill())
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(800))
+        assertEquals("+120 MB freed", ramPill())
+        assertFalse(report.exists())
+    }
+
+    @Test
+    fun `not what it freed a while ago`() {
+        val report = appsCleared(120, agoMs = 120_000)
+
+        StatusIndicators(row).start()
+
+        assertTrue(ramPill().endsWith(" MB"))
+        assertFalse(report.exists())
     }
 
     private fun vpnPill(): Int {

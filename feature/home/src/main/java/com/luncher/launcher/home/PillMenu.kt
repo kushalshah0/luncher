@@ -94,7 +94,16 @@ internal class PillMenu(private val activity: Activity) {
         setPadding(dp(16), dp(12), dp(16), dp(12))
     }
 
-    fun divider(): View = View(activity).apply {
+    /**
+     * A line across the menu. As wide as it's told to be, else none: a plain View asks for all the
+     * width it may have, which would make every menu MAX_WIDTH_DP wide.
+     */
+    fun divider(): View = object : View(activity) {
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+            val exact = MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
+            setMeasuredDimension(if (exact) MeasureSpec.getSize(widthMeasureSpec) else 0, MeasureSpec.getSize(heightMeasureSpec))
+        }
+    }.apply {
         setBackgroundColor(DIVIDER)
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply {
             setMargins(dp(16), dp(8), dp(16), dp(8))

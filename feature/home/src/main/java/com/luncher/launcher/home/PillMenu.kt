@@ -192,6 +192,7 @@ internal class PillMenu(private val activity: Activity) {
     fun button(title: String, onClick: () -> Unit): View = TextView(activity).apply {
         this.text = title
         gravity = Gravity.CENTER
+        textAlignment = View.TEXT_ALIGNMENT_CENTER   // else the theme's alignment wins over gravity
         textSize = TEXT_SP
         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         setTextColor(this@PillMenu.text)

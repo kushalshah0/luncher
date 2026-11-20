@@ -127,8 +127,8 @@ internal class StatusIndicators(row: View) {
 
     /**
      * Frees memory: stops every other app's background processes (Android lets a launcher do that),
-     * and leaves [CLEAR_REQUEST] for the box's root script, which also clears the recent apps and
-     * blinks the front LED. The pill pulses with "Cleaning…", then shows what was freed.
+     * and leaves [CLEAR_REQUEST] for the box's root script, which also clears the recent apps.
+     * The pill pulses with "Cleaning…", then shows what was freed.
      */
     fun cleanMemory() {
         val before = freeMb()

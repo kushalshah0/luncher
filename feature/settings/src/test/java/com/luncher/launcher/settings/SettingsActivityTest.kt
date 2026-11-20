@@ -3,6 +3,7 @@ package com.luncher.launcher.settings
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.ResolveInfo
+import android.os.Looper
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
@@ -13,6 +14,8 @@ import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.TopBarAppearance
 import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.ui.R as UiR
+import java.io.File
+import java.time.Duration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -46,7 +49,7 @@ class SettingsActivityTest {
 
     @Test
     fun `lists hiding apps, the appearance and the pictures, then the system settings`() {
-        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings"), start().titles().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings", "Restart"), start().titles().map { it.text.toString() })
     }
 
     @Test
@@ -54,7 +57,7 @@ class SettingsActivityTest {
         val entries = start().entries()
 
         val gaps = entries.zipWithNext { above, below -> below.top - above.bottom }
-        assertEquals(listOf(0, 0, 0), gaps)
+        assertEquals(listOf(0, 0, 0, 0), gaps)
     }
 
     @Test
@@ -71,7 +74,7 @@ class SettingsActivityTest {
         controller.configurationChange().visible()   // Robolectric shows the new window only when told
 
         val activity = controller.get()
-        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings"), activity.titles().map { it.text.toString() })
+        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings", "Restart"), activity.titles().map { it.text.toString() })
         assertTrue(activity.entries().first().isFocused)
     }
 
@@ -171,6 +174,43 @@ class SettingsActivityTest {
         assertEquals(Settings.ACTION_SETTINGS, intent.action)
         assertEquals("com.android.settings", intent.`package`)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    @Test
+    fun `the first OK on Restart asks for a second, and restarts nothing yet`() {
+        val activity = start()
+        val restart = activity.entries()[4]
+
+        restart.requestFocus()
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        assertEquals("Press OK again to restart", activity.titles()[4].text.toString())
+        assertFalse(File(activity.getExternalFilesDir(null), BoxRestart.REQUEST).exists())
+    }
+
+    @Test
+    fun `a second OK on Restart asks the box's script to restart it`() {
+        val activity = start()
+
+        activity.entries()[4].requestFocus()
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        assertTrue(File(activity.getExternalFilesDir(null), BoxRestart.REQUEST).exists())
+    }
+
+    // The box's script isn't running: the request can't stay, to restart the box later, unasked.
+    @Test
+    fun `takes the request back when the box is still up later`() {
+        val activity = start()
+        activity.entries()[4].requestFocus()
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+        activity.press(KeyEvent.KEYCODE_DPAD_CENTER)
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(BoxRestart.TIMEOUT_MS))
+
+        assertFalse(File(activity.getExternalFilesDir(null), BoxRestart.REQUEST).exists())
+        assertEquals("Couldn't restart: the box's restart script isn't running", ShadowToast.getTextOfLatestToast())
     }
 
     @Test

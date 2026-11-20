@@ -27,6 +27,7 @@ class SettingsActivity : Activity() {
 
     private lateinit var panel: View
     private lateinit var entries: LinearLayout
+    private val restart by lazy { BoxRestart(this) }
     private val theme by lazy { ScreenTheme(graph.appearanceSettings) { panel.stylePanel(it) } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,7 +57,7 @@ class SettingsActivity : Activity() {
             view.findViewById<TextView>(R.id.settings_entry_title).setText(label(entry))
             view.findViewById<ImageView>(R.id.settings_entry_icon).setImageResource(icon(entry))
             view.findViewById<ImageView>(R.id.settings_entry_end).setImageResource(end(entry))
-            view.setOnClickListener { open(entry) }
+            view.setOnClickListener { open(entry, view) }
             entries.addView(view)
         }
     }
@@ -66,6 +67,7 @@ class SettingsActivity : Activity() {
         SettingsEntry.Appearance -> R.string.settings_appearance
         SettingsEntry.SystemSettings -> R.string.settings_system
         SettingsEntry.AndroidSettings -> R.string.settings_android
+        SettingsEntry.Restart -> R.string.settings_restart
     }
 
     private fun icon(entry: SettingsEntry): Int = when (entry) {
@@ -73,19 +75,22 @@ class SettingsActivity : Activity() {
         SettingsEntry.Appearance -> UiR.drawable.icon_palette
         SettingsEntry.SystemSettings -> UiR.drawable.icon_tv
         SettingsEntry.AndroidSettings -> R.drawable.settings_icon_phone
+        SettingsEntry.Restart -> UiR.drawable.icon_reset
     }
 
-    /** At the entry's end: a screen of Luncher's, or another app. */
+    /** At the entry's end: a screen of Luncher's, or another app; nothing for an action. */
     private fun end(entry: SettingsEntry): Int = when (entry) {
         SettingsEntry.HideApps, SettingsEntry.Appearance -> UiR.drawable.icon_chevron
         SettingsEntry.SystemSettings, SettingsEntry.AndroidSettings -> UiR.drawable.icon_open
+        SettingsEntry.Restart -> 0
     }
 
-    private fun open(entry: SettingsEntry) = when (entry) {
+    private fun open(entry: SettingsEntry, view: View) = when (entry) {
         SettingsEntry.HideApps -> openOwnPanel(Intent(this, HideAppsActivity::class.java))
         SettingsEntry.Appearance -> openOwnPanel(Intent(this, AppearanceActivity::class.java))
         SettingsEntry.SystemSettings -> openSystemSettings()
         SettingsEntry.AndroidSettings -> openAndroidSettings()
+        SettingsEntry.Restart -> restart.press(view.findViewById(R.id.settings_entry_title))
     }
 
     /**

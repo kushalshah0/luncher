@@ -21,4 +21,7 @@ sealed interface SettingsEntry {
      * keep beside the TV's: it has screens the TV's lacks, such as VPN.
      */
     data object AndroidSettings : SettingsEntry
+
+    /** Restarts the box (NETTV fork): through its root script, after a second OK. */
+    data object Restart : SettingsEntry
 }

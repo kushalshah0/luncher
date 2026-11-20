@@ -13,12 +13,14 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import android.view.WindowManager
+import android.view.Window
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import com.luncher.launcher.ui.R as UiR
 import java.io.File
 
 /**
@@ -27,7 +29,8 @@ import java.io.File
  * the RAM pill's clear-request, and restarts the box when [REQUEST] appears.
  *
  * OK on the entry opens a small modal over the dimmed screen, white like the home screen's Wi-Fi
- * and VPN menus: "Restart now?", Cancel (focused, so a stray OK restarts nothing) and Restart. Restart leaves the
+ * and VPN menus: a restart icon, "Restart now?", Cancel (focused, so a stray OK restarts nothing)
+ * and Restart. Restart leaves the
  * request and fades in "Restarting…" over everything. If the box is still up after [TIMEOUT_MS],
  * its script isn't running: the request goes, so it can't restart the box out of the blue later.
  */
@@ -37,7 +40,7 @@ internal class BoxRestart(private val activity: Activity) {
     private val request = File(activity.getExternalFilesDir(null), REQUEST)
     private val density = activity.resources.displayMetrics.density
 
-    /** The modal asking to restart. */
+    /** The modal asking to restart, over the dimmed screen. */
     fun confirm() {
         val dialog = Dialog(activity).apply { requestWindowFeature(Window.FEATURE_NO_TITLE) }
         val cancel = button(R.string.settings_restart_cancel) { dialog.dismiss() }
@@ -45,27 +48,38 @@ internal class BoxRestart(private val activity: Activity) {
             dialog.dismiss()
             restart()
         }
-        dialog.setContentView(LinearLayout(activity).apply {
+        val card = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(Color.WHITE) }
-            setPadding(dp(24), dp(22), dp(24), dp(20))
-            addView(text(R.string.settings_restart_title, 19f, INK).apply {
+            gravity = Gravity.CENTER_HORIZONTAL
+            background = GradientDrawable().apply { cornerRadius = dp(22).toFloat(); setColor(Color.WHITE) }
+            elevation = dp(24).toFloat()
+            setPadding(dp(22), dp(24), dp(22), dp(20))
+            addView(ImageView(activity).apply {
+                setImageResource(UiR.drawable.icon_reset)
+                imageTintList = ColorStateList.valueOf(INK)
+                background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(FIELD) }
+                setPadding(dp(12), dp(12), dp(12), dp(12))
+            }, LinearLayout.LayoutParams(dp(48), dp(48)))
+            addView(TextView(activity).apply {
+                setText(R.string.settings_restart_title)
+                textAlignment = View.TEXT_ALIGNMENT_CENTER   // else the theme's start alignment wins
+                textSize = 18f
+                setTextColor(INK)
                 typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-            })
+                setPadding(0, dp(14), 0, 0)
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.END
-                setPadding(0, dp(20), 0, 0)
-                addView(cancel)
-                addView(restart, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                    leftMargin = dp(10)
-                })
-            })
-        }, ViewGroup.LayoutParams(dp(WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT))
+                setPadding(0, dp(22), 0, 0)
+                addView(cancel, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                addView(restart, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { leftMargin = dp(10) })
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+        dialog.setContentView(card, ViewGroup.LayoutParams(dp(WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT))
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))   // the panel's own rounded white
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))   // the card's own rounded white
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setDimAmount(0.6f)
+            setDimAmount(DIM)
         }
         dialog.show()
         cancel.requestFocus()
@@ -106,12 +120,6 @@ internal class BoxRestart(private val activity: Activity) {
         setOnClickListener { onClick() }
     }
 
-    private fun text(resource: Int, size: Float, color: Int) = TextView(activity).apply {
-        setText(resource)
-        textSize = size
-        setTextColor(color)
-    }
-
     private fun pill(color: Int) = GradientDrawable().apply { cornerRadius = dp(BUTTON_HEIGHT_DP / 2).toFloat(); setColor(color) }
 
     /** Black over the whole screen, "Restarting…" and a spinner fading in. */
@@ -147,6 +155,8 @@ internal class BoxRestart(private val activity: Activity) {
         const val TIMEOUT_MS = 15_000L
         const val FADE_MS = 400L
         const val WIDTH_DP = 300
+        /** How dark the screen goes behind the modal. */
+        const val DIM = 0.6f
         const val BUTTON_HEIGHT_DP = 40
         const val BUTTON_MIN_WIDTH_DP = 104
 

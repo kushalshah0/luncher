@@ -39,7 +39,7 @@ internal class PillMenu(private val activity: Activity) {
         val list = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         rows.forEach(list::addView)
         val panel = ScrollView(activity).apply {
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setPadding(dp(6), dp(6), dp(6), dp(6))
             isVerticalScrollBarEnabled = false
             addView(list)
         }
@@ -51,7 +51,7 @@ internal class PillMenu(private val activity: Activity) {
             // The panel's shape as the window's background: its outline casts the shadow, and a
             // background lets Back and a touch outside close it.
             setBackgroundDrawable(GradientDrawable().apply {
-                cornerRadius = dp(22).toFloat()
+                cornerRadius = dp(18).toFloat()
                 setColor(Color.WHITE)
                 setStroke(dp(1), RIM)
             })
@@ -64,34 +64,48 @@ internal class PillMenu(private val activity: Activity) {
     /** A row: [icon], [title], and at its end [status], green if [statusGreen]. OK closes the menu, then runs [onClick]. */
     fun row(icon: Int, title: String, status: String?, statusGreen: Boolean = false, onClick: () -> Unit): View =
         focusableRow(onClick).apply {
-            addView(ImageView(activity).apply {
-                setImageResource(icon)
-                imageTintList = this@PillMenu.text
-                isDuplicateParentStateEnabled = true
-            }, LinearLayout.LayoutParams(dp(20), dp(20)))
-            addView(label(title, 17f, text).apply { setPadding(dp(16), 0, dp(12), 0) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            if (status != null) addView(label(status, 13f, if (statusGreen) green else secondary))
+            addView(iconView(icon), LinearLayout.LayoutParams(dp(ICON_DP), dp(ICON_DP)))
+            addView(label(title, TEXT_SP, text).apply { setPadding(dp(12), 0, dp(10), 0) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            if (status != null) addView(label(status, SMALL_SP, if (statusGreen) green else secondary))
         }
 
     /**
-     * The menu's first row: [title] in bold, [status] under it, and a switch showing [on]. OK
-     * closes the menu, then runs [onToggle].
+     * The menu's first row: [title], medium weight, [status] under it if any, and a switch showing [on].
+     * OK closes the menu, then runs [onToggle].
      */
-    fun header(title: String, status: String, on: Boolean, onToggle: () -> Unit): View =
+    fun header(title: String, status: String?, on: Boolean, onToggle: () -> Unit): View =
         focusableRow(onToggle).apply {
             addView(LinearLayout(activity).apply {
                 orientation = LinearLayout.VERTICAL
                 isDuplicateParentStateEnabled = true
-                addView(label(title, 19f, text).apply { setTypeface(typeface, Typeface.BOLD) })
-                addView(label(status, 13f, secondary).apply { setPadding(0, dp(2), 0, 0) })
-            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(16) })
+                addView(label(title, TITLE_SP, text).apply { typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL) })
+                if (status != null) addView(label(status, SMALL_SP, secondary).apply { setPadding(0, dp(1), 0, 0) })
+            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(12) })
             addView(switch(on), LinearLayout.LayoutParams(dp(SWITCH_WIDTH_DP), dp(SWITCH_HEIGHT_DP)))
         }
 
+    /**
+     * Two buttons side by side: a wide one, [icon] and [title], and a square one at its end, only
+     * [sideIcon]. Left and Right move between them; OK closes the menu, then runs theirs.
+     */
+    fun splitRow(icon: Int, title: String, onClick: () -> Unit, sideIcon: Int, onSide: () -> Unit): View =
+        LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(focusableRow(onClick).apply {
+                addView(iconView(icon), LinearLayout.LayoutParams(dp(ICON_DP), dp(ICON_DP)))
+                addView(label(title, TEXT_SP, text).apply { setPadding(dp(12), 0, 0, 0) })
+            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(focusableRow(onSide).apply {
+                gravity = Gravity.CENTER
+                setPadding(0, 0, 0, 0)
+                addView(iconView(sideIcon), LinearLayout.LayoutParams(dp(ICON_DP), dp(ICON_DP)))
+            }, LinearLayout.LayoutParams(dp(ROW_HEIGHT_DP), dp(ROW_HEIGHT_DP)).apply { leftMargin = dp(4) })
+        }
+
     /** A line of grey text, not focusable: e.g. why there's nothing to list. */
-    fun note(text: String): View = label(text, 15f, ColorStateList.valueOf(GREY)).apply {
+    fun note(text: String): View = label(text, TEXT_SP, ColorStateList.valueOf(GREY)).apply {
         setSingleLine(false)
-        setPadding(dp(16), dp(12), dp(16), dp(12))
+        setPadding(dp(12), dp(10), dp(12), dp(10))
     }
 
     /**
@@ -106,7 +120,7 @@ internal class PillMenu(private val activity: Activity) {
     }.apply {
         setBackgroundColor(DIVIDER)
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply {
-            setMargins(dp(16), dp(8), dp(16), dp(8))
+            setMargins(dp(12), dp(6), dp(12), dp(6))
         }
     }
 
@@ -115,9 +129,9 @@ internal class PillMenu(private val activity: Activity) {
         gravity = Gravity.CENTER_VERTICAL
         isFocusable = true
         isClickable = true
-        minimumHeight = dp(52)
-        setPadding(dp(16), dp(10), dp(16), dp(10))
-        background = focusedOr(rounded(INK, 16), ColorDrawable(Color.TRANSPARENT))
+        minimumHeight = dp(ROW_HEIGHT_DP)
+        setPadding(dp(12), dp(6), dp(12), dp(6))
+        background = focusedOr(rounded(INK, 12), ColorDrawable(Color.TRANSPARENT))
         setOnClickListener { popup?.dismiss(); onClick() }
     }
 
@@ -135,6 +149,12 @@ internal class PillMenu(private val activity: Activity) {
         }, FrameLayout.LayoutParams(knob, knob, (if (on) Gravity.END else Gravity.START) or Gravity.CENTER_VERTICAL).apply {
             setMargins(dp(KNOB_INSET_DP), 0, dp(KNOB_INSET_DP), 0)
         })
+    }
+
+    private fun iconView(resource: Int) = ImageView(activity).apply {
+        setImageResource(resource)
+        imageTintList = text
+        isDuplicateParentStateEnabled = true
     }
 
     private fun label(text: String, size: Float, color: ColorStateList) = TextView(activity).apply {
@@ -163,10 +183,15 @@ internal class PillMenu(private val activity: Activity) {
     private fun dp(value: Int) = (value * density).toInt()
 
     private companion object {
-        const val MIN_WIDTH_DP = 240
-        const val MAX_WIDTH_DP = 320
-        const val SWITCH_WIDTH_DP = 40
-        const val SWITCH_HEIGHT_DP = 24
+        const val MIN_WIDTH_DP = 220
+        const val MAX_WIDTH_DP = 280
+        const val ROW_HEIGHT_DP = 42
+        const val ICON_DP = 18
+        const val TITLE_SP = 16f
+        const val TEXT_SP = 15f
+        const val SMALL_SP = 12f
+        const val SWITCH_WIDTH_DP = 34
+        const val SWITCH_HEIGHT_DP = 20
         const val KNOB_INSET_DP = 3
 
         // Mono graphite.

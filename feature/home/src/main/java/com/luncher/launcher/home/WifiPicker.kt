@@ -13,13 +13,16 @@ import android.provider.Settings
 import android.text.InputType
 import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
+import com.luncher.launcher.ui.R as UiR
 
 /**
  * The Wi-Fi dropdown (NETTV fork): a [PillMenu] below the network pill, listing
- * a switch for Wi-Fi itself (off asks first), then the networks around, the connected one first
- * and marked "Connected". OK on a network connects to it, asking for the password of a secured network
- * that isn't saved yet; the last rows rescan or open Android's Wi-Fi settings. Uses the
+ * a switch for Wi-Fi itself, Add network (by name, e.g. a hidden one) beside Refresh, then the
+ * networks around, the connected one first and marked "Connected". OK on a network connects to it,
+ * asking for the password of a secured network that isn't saved yet; the last row opens Android's
+ * Wi-Fi settings. Uses the
  * pre-Android 10 WifiManager calls, which still work on the Android 7 box this fork is for.
  */
 @Suppress("DEPRECATION")
@@ -41,51 +44,78 @@ internal class WifiPicker(private val activity: Activity) {
         val list = mutableListOf<View>()
         val on = wifi.isWifiEnabled
         val current = wifi.connectionInfo?.ssid.orEmpty().removeSurrounding("\"").takeUnless { it == UNKNOWN_SSID }.orEmpty()
-        val status = when {
-            !on -> "Off"
-            current.isNotEmpty() -> "Connected to $current"
-            else -> "Not connected"
-        }
-        val header = menu.header("Wi-Fi", status, on) {
-            if (on) confirmTurnOff() else { wifi.isWifiEnabled = true; toast("Turning Wi-Fi on…") }
+        val header = menu.header("Wi-Fi", status = null, on = on) {
+            wifi.isWifiEnabled = !on
+            toast(if (on) "Turning Wi-Fi off…" else "Turning Wi-Fi on…")
         }
         list.add(header)
-        list.add(menu.divider())
+        var focus = header
         if (!on) {
+            list.add(menu.divider())
             list.add(menu.note("Turn on Wi-Fi to see networks"))
         } else {
+            list.add(menu.splitRow(UiR.drawable.icon_plus, "Add network", ::addNetwork, R.drawable.home_ic_updown) { show(anchor) })
             wifi.startScan()   // for the next time; the list shows the last scan's results
             val networks = wifi.scanResults.orEmpty()
                 .filter { it.SSID.isNotBlank() }
                 .groupBy { it.SSID }.map { (_, same) -> same.maxByOrNull { it.level }!! }
                 .sortedWith(compareByDescending<ScanResult> { it.SSID == current }.thenByDescending { it.level })
                 .take(MAX_NETWORKS)
-            if (networks.isEmpty()) list.add(menu.row(R.drawable.home_ic_wifi, "Searching…", null) { show(anchor) })
-            for (network in networks) {
+            val rows = networks.map { network ->
                 val connected = network.SSID == current
-                val networkStatus = when {
-                    connected -> "●  Connected"
+                val status = when {
+                    connected -> "Connected"
                     secured(network) -> "Secured"
                     else -> "Open"
                 }
-                list.add(menu.row(R.drawable.home_ic_wifi, network.SSID, networkStatus, statusGreen = connected) { connect(network) })
-            }
-            list.add(menu.divider())
-            list.add(menu.row(R.drawable.home_ic_updown, "Refresh", null) { show(anchor) })
+                menu.row(R.drawable.home_ic_wifi, network.SSID, status, statusGreen = connected) { connect(network) }
+            }.ifEmpty { listOf(menu.row(R.drawable.home_ic_wifi, "Searching…", null) { show(anchor) }) }
+            list.addAll(rows)
+            focus = rows.first()   // so turning Wi-Fi off takes Up first, past Add network
         }
+        list.add(menu.divider())
         list.add(menu.row(R.drawable.home_ic_settings, "Wi-Fi settings", null) {
             runCatching { activity.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) }
         })
-        // On the first network, so turning Wi-Fi off takes Up first; while it's off, on the switch.
-        menu.show(anchor, list, focus = if (on) list[2] else header)
+        menu.show(anchor, list, focus)
     }
 
-    /** Off cuts everything the box streams, and the VPN: asked first. */
-    private fun confirmTurnOff() {
+    /**
+     * A network by its name, e.g. a hidden one: open without a password, else WPA/WPA2 (8 to 63
+     * characters). WEP and enterprise networks are Wi-Fi settings' to add.
+     */
+    private fun addNetwork() {
+        val name = EditText(activity).apply { hint = "Network name"; setSingleLine() }
+        val password = EditText(activity).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            hint = "Password (none if open)"
+        }
+        val padding = (20 * activity.resources.displayMetrics.density).toInt()
+        val fields = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(padding, 0, padding, 0)
+            addView(name)
+            addView(password)
+        }
         AlertDialog.Builder(activity, DIALOG_THEME)
-            .setTitle("Turn Wi-Fi off?")
-            .setMessage("Streaming and the VPN will disconnect.")
-            .setPositiveButton("Turn off") { _, _ -> wifi.isWifiEnabled = false; toast("Turning Wi-Fi off…") }
+            .setTitle("Add network").setView(fields)
+            .setPositiveButton("Connect") { _, _ ->
+                val ssid = name.text.toString().trim()
+                val key = password.text.toString()
+                when {
+                    ssid.isEmpty() -> toast("Enter the network's name")
+                    key.isNotEmpty() && key.length !in 8..63 -> toast("A WPA password has 8 to 63 characters")
+                    else -> add(WifiConfiguration().apply {
+                        SSID = "\"$ssid\""
+                        hiddenSSID = true   // connects whether or not the name is broadcast
+                        if (key.isEmpty()) {
+                            allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
+                        } else {
+                            preSharedKey = "\"$key\""
+                        }
+                    }, ssid)
+                }
+            }
             .setNegativeButton("Cancel", null).show()
     }
 

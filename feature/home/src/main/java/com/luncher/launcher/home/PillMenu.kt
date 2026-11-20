@@ -128,27 +128,6 @@ internal class PillMenu(private val activity: Activity) {
             addView(title(title).apply { setPadding(dp(10), 0, 0, 0) })
         }
 
-    /**
-     * Two buttons side by side, neither closing the menu: a wide one, [icon] and [title], and a
-     * square one at its end, only [sideIcon], given to [onSide] (e.g. to spin it). Left and Right
-     * move between them.
-     */
-    fun splitRow(icon: Int, title: String, onClick: () -> Unit, sideIcon: Int, onSide: (View) -> Unit): View =
-        LinearLayout(activity).apply {
-            orientation = LinearLayout.HORIZONTAL
-            addView(focusableRow(closes = false, onClick).apply {
-                addView(iconView(icon), LinearLayout.LayoutParams(dp(ICON_DP), dp(ICON_DP)))
-                addView(label(title, TEXT_SP, text).apply { setPadding(dp(12), 0, 0, 0) })
-            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            lateinit var side: View
-            side = focusableRow(closes = false) { onSide(side) }.apply {
-                gravity = Gravity.CENTER
-                setPadding(0, 0, 0, 0)
-                addView(iconView(sideIcon), LinearLayout.LayoutParams(dp(ICON_DP), dp(ICON_DP)))
-            }
-            addView(side, LinearLayout.LayoutParams(dp(ROW_HEIGHT_DP), dp(ROW_HEIGHT_DP)).apply { leftMargin = dp(4) })
-        }
-
     /** A small grey caption over a [field], in capitals. */
     fun caption(text: String): View = label(text.uppercase(), CAPTION_SP, ColorStateList.valueOf(GREY)).apply {
         letterSpacing = 0.08f
@@ -160,6 +139,7 @@ internal class PillMenu(private val activity: Activity) {
         this.hint = hint
         setSingleLine()
         inputType = InputType.TYPE_CLASS_TEXT or (if (password) InputType.TYPE_TEXT_VARIATION_PASSWORD else 0)
+        typeface = Typeface.DEFAULT   // a password input type makes it monospace
         textSize = TEXT_SP
         setTextColor(INK)
         setHintTextColor(GREY)
@@ -174,7 +154,40 @@ internal class PillMenu(private val activity: Activity) {
         }
     }
 
-    /** A wide button, light grey, graphite while focused. OK runs [onClick], the menu staying open. */
+    /**
+     * A password [field] with an eye at its end: OK on the eye shows the password, or hides it
+     * again. Right from the end of the text reaches it. The field, and the view to add.
+     */
+    fun passwordField(hint: String): Pair<EditText, View> {
+        val field = field(hint, password = true)
+        val wrapper = FrameLayout(activity).apply { layoutParams = field.layoutParams }
+        field.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        field.setPadding(dp(12), 0, dp(EYE_DP + 8), 0)
+        wrapper.addView(field)
+        var shown = false
+        wrapper.addView(ImageView(activity).apply {
+            setImageResource(R.drawable.home_ic_eye)
+            imageTintList = focusedOr(Color.WHITE, GREY)
+            background = focusedOr(rounded(INK, 8), ColorDrawable(Color.TRANSPARENT))
+            val inset = dp(7)
+            setPadding(inset, inset, inset, inset)
+            isFocusable = true
+            isClickable = true
+            contentDescription = "Show password"
+            setOnClickListener {
+                shown = !shown
+                field.inputType = InputType.TYPE_CLASS_TEXT or
+                    (if (shown) InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD else InputType.TYPE_TEXT_VARIATION_PASSWORD)
+                field.typeface = Typeface.DEFAULT
+                field.setSelection(field.text.length)
+                setImageResource(if (shown) UiR.drawable.icon_eye_off else R.drawable.home_ic_eye)
+                contentDescription = if (shown) "Hide password" else "Show password"
+            }
+        }, FrameLayout.LayoutParams(dp(EYE_DP), dp(EYE_DP), Gravity.END or Gravity.CENTER_VERTICAL).apply { rightMargin = dp(4) })
+        return field to wrapper
+    }
+
+    /** A button, light grey, graphite while focused, centered. OK runs [onClick], the menu staying open. */
     fun button(title: String, onClick: () -> Unit): View = TextView(activity).apply {
         this.text = title
         gravity = Gravity.CENTER
@@ -184,10 +197,13 @@ internal class PillMenu(private val activity: Activity) {
         isFocusable = true
         isClickable = true
         minHeight = dp(ROW_HEIGHT_DP)
-        background = focusedOr(rounded(INK, 12), rounded(FIELD, 12))
+        minWidth = dp(BUTTON_MIN_WIDTH_DP)
+        setPadding(dp(24), 0, dp(24), 0)
+        background = focusedOr(rounded(INK, ROW_HEIGHT_DP / 2), rounded(FIELD, ROW_HEIGHT_DP / 2))
         setOnClickListener { onClick() }
-        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            setMargins(dp(6), dp(14), dp(6), dp(4))
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            gravity = Gravity.CENTER_HORIZONTAL
+            setMargins(dp(6), dp(16), dp(6), dp(6))
         }
     }
 
@@ -296,6 +312,8 @@ internal class PillMenu(private val activity: Activity) {
         const val TEXT_SP = 15f
         const val SMALL_SP = 12f
         const val CAPTION_SP = 11f
+        const val EYE_DP = 34
+        const val BUTTON_MIN_WIDTH_DP = 140
         const val SWITCH_WIDTH_DP = 34
         const val SWITCH_HEIGHT_DP = 20
         const val KNOB_INSET_DP = 3

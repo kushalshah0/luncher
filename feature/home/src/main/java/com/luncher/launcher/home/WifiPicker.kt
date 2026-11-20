@@ -1,37 +1,27 @@
 package com.luncher.launcher.home
 
 import android.Manifest
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.os.SystemClock
 import android.provider.Settings
 import android.text.InputType
 import android.view.View
-import android.view.ViewGroup
-import android.view.animation.LinearInterpolator
 import android.widget.EditText
 import android.widget.Toast
 import com.luncher.launcher.ui.R as UiR
 
 /**
  * The Wi-Fi dropdown (NETTV fork): a [PillMenu] below the network pill, listing
- * a switch for Wi-Fi itself, Add network (by name, e.g. a hidden one) beside Refresh, then the
- * networks around, the connected one first and marked "Connected". OK on a network connects to it,
- * asking for the password of a secured network that isn't saved yet; the last row opens Android's
- * Wi-Fi settings. Uses the
+ * a switch for Wi-Fi itself, then the networks around, the connected one first and marked
+ * "Connected". OK on a network connects to it, asking for the password of a secured network that
+ * isn't saved yet; the last rows add a network by name (a page of the menu, e.g. for a hidden
+ * one) and open Android's Wi-Fi settings. Uses the
  * pre-Android 10 WifiManager calls, which still work on the Android 7 box this fork is for.
  */
 @Suppress("DEPRECATION")
@@ -39,10 +29,8 @@ internal class WifiPicker(private val activity: Activity) {
 
     private val wifi = activity.applicationContext.getSystemService(Activity.WIFI_SERVICE) as WifiManager
     private val menu = PillMenu(activity)
-    private val handler = Handler(Looper.getMainLooper())
     private var anchor: View? = null
     private var page = Page.LIST
-    private var scanning = false
 
     private enum class Page { LIST, ADD }
 
@@ -55,12 +43,12 @@ internal class WifiPicker(private val activity: Activity) {
             activity.requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_LOCATION)
             return
         }
-        wifi.startScan()   // for Refresh, and the next time; the list shows the last scan's results
+        wifi.startScan()   // for the next time; the list shows the last scan's results
         showList(anchor)
     }
 
-    /** The menu's main page: the switch, Add network and Refresh, the networks, Wi-Fi settings. */
-    private fun showList(anchor: View, focusRefresh: Boolean = false) {
+    /** The menu's main page: the switch, the networks, Add network and Wi-Fi settings. */
+    private fun showList(anchor: View) {
         val list = mutableListOf<View>()
         val on = wifi.isWifiEnabled
         val current = wifi.connectionInfo?.ssid.orEmpty().removeSurrounding("\"").takeUnless { it == UNKNOWN_SSID }.orEmpty()
@@ -74,10 +62,6 @@ internal class WifiPicker(private val activity: Activity) {
             list.add(menu.divider())
             list.add(menu.note("Turn on Wi-Fi to see networks"))
         } else {
-            val actions = menu.splitRow(UiR.drawable.icon_plus, "Add network", { showAddNetwork(anchor) }, R.drawable.home_ic_updown) {
-                refresh(anchor, it)
-            }
-            list.add(actions)
             val networks = wifi.scanResults.orEmpty()
                 .filter { it.SSID.isNotBlank() }
                 .groupBy { it.SSID }.map { (_, same) -> same.maxByOrNull { it.level }!! }
@@ -93,56 +77,18 @@ internal class WifiPicker(private val activity: Activity) {
                 menu.row(R.drawable.home_ic_wifi, network.SSID, status, statusGreen = connected) { connect(network) }
             }.ifEmpty { listOf(menu.note("No networks found")) }
             list.addAll(rows)
-            // The first network, so turning Wi-Fi off takes Up first, past Add network; Refresh
-            // again after refreshing.
-            focus = when {
-                focusRefresh -> (actions as ViewGroup).getChildAt(1)
-                rows.first().isFocusable -> rows.first()
-                else -> actions
-            }
+            // The first network, so turning Wi-Fi off takes Up first.
+            focus = rows.first()
         }
         list.add(menu.divider())
+        val addNetwork = menu.row(UiR.drawable.icon_plus, "Add network", null, closes = false) { showAddNetwork(anchor) }
+        if (on) list.add(addNetwork)
+        if (!focus.isFocusable) focus = addNetwork   // no networks found: a note
         list.add(menu.row(R.drawable.home_ic_settings, "Wi-Fi settings", null) {
             runCatching { activity.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) }
         })
         page = Page.LIST
         menu.show(anchor, list, focus)
-    }
-
-    /**
-     * Refresh: [button]'s arrows turn while Android scans, at least [MIN_SPIN_MS] so it's seen,
-     * at most [SCAN_TIMEOUT_MS]; then the list shows what it found, Refresh focused again.
-     */
-    private fun refresh(anchor: View, button: View) {
-        if (scanning) return
-        scanning = true
-        val arrows = (button as ViewGroup).getChildAt(0)
-        val spin = ObjectAnimator.ofFloat(arrows, View.ROTATION, 0f, 360f).apply {
-            duration = SPIN_MS
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = LinearInterpolator()
-            start()
-        }
-        val started = SystemClock.elapsedRealtime()
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) = finishRefresh(anchor, this, spin, started)
-        }
-        val filter = IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
-        if (Build.VERSION.SDK_INT >= 33) activity.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED) else activity.registerReceiver(receiver, filter)
-        if (!wifi.startScan()) finishRefresh(anchor, receiver, spin, started)
-        handler.postDelayed({ finishRefresh(anchor, receiver, spin, started) }, SCAN_TIMEOUT_MS)
-    }
-
-    private fun finishRefresh(anchor: View, receiver: BroadcastReceiver, spin: ObjectAnimator, started: Long) {
-        if (!scanning) return
-        scanning = false
-        runCatching { activity.unregisterReceiver(receiver) }
-        handler.removeCallbacksAndMessages(null)
-        val wait = (started + MIN_SPIN_MS - SystemClock.elapsedRealtime()).coerceAtLeast(0)
-        handler.postDelayed({
-            spin.cancel()
-            if (menu.isShowing && page == Page.LIST) showList(anchor, focusRefresh = true)
-        }, wait)
     }
 
     /**
@@ -152,7 +98,7 @@ internal class WifiPicker(private val activity: Activity) {
      */
     private fun showAddNetwork(anchor: View) {
         val name = menu.field("e.g. Home Wi-Fi")
-        val password = menu.field("None if open", password = true)
+        val (password, passwordRow) = menu.passwordField("None if open")
         val back = { showList(anchor) }
         page = Page.ADD
         menu.show(anchor, listOf(
@@ -161,7 +107,7 @@ internal class WifiPicker(private val activity: Activity) {
             menu.caption("Network name"),
             name,
             menu.caption("Password"),
-            password,
+            passwordRow,
             menu.button("Connect") {
                 val ssid = name.text.toString().trim()
                 val key = password.text.toString()
@@ -240,9 +186,6 @@ internal class WifiPicker(private val activity: Activity) {
     companion object {
         const val REQUEST_LOCATION = 42
         const val MAX_NETWORKS = 8
-        const val SPIN_MS = 700L
-        const val MIN_SPIN_MS = 900L
-        const val SCAN_TIMEOUT_MS = 8_000L
         /** What WifiInfo says while connected to no network. */
         const val UNKNOWN_SSID = "<unknown ssid>"
         /** Light, as the menus. */

@@ -113,12 +113,12 @@
                     android:drawableLeft="@drawable/home_ic_vpn"
                     android:visibility="gone" />
 
-                <!-- Opens the Bluetooth menu; dimmed while nothing is connected (StatusIndicators). -->
+                <!-- Opens the Bluetooth menu; its icon says off, on or connected (StatusIndicators). -->
                 <TextView
                     android:id="@+id/home_status_bluetooth"
-                    style="@style/HomeStatusPill.Icon"
-                    android:contentDescription="@string/home_status_bluetooth"
+                    style="@style/HomeStatusPill.Clickable"
                     android:drawableLeft="@drawable/home_ic_bluetooth"
+                    android:text="@string/home_status_bluetooth"
                     android:visibility="gone" />
             </LinearLayout>
 

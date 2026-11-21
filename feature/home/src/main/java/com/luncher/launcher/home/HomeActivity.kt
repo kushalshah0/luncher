@@ -297,7 +297,7 @@ class HomeActivity : Activity() {
         tiles.accent = roles.homeAccent
         // NETTV fork: the clickable pills (settings among them) are frosted glass, and white with
         // black text and icon while focused, whatever the accent.
-        for (pill in listOf(status.network, status.ram, status.usb, status.vpn, settingsEntry as TextView)) {
+        for (pill in listOf(status.network, status.ram, status.usb, status.vpn, status.bluetooth, settingsEntry as TextView)) {
             pill.background = glassWithFocus(GradientDrawable.RECTANGLE, R.drawable.home_glass_pill, android.graphics.Color.WHITE)
             if (Build.VERSION.SDK_INT >= 23) pill.compoundDrawableTintList = pill.textColors
         }

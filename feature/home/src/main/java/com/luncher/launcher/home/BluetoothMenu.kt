@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,14 +16,13 @@ import android.os.Build
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
-import com.luncher.launcher.ui.R as UiR
 
 /**
  * The Bluetooth pill's dropdown (NETTV fork), a [PillMenu] as the Wi-Fi one: a switch for
- * Bluetooth with what's connected; the paired devices, the connected first, OK connecting or
- * disconnecting one; then the devices around that aren't paired, found by a search started as the
- * menu opens, OK pairing one (the TV asks to confirm) and connecting it once paired; then Android's
- * Bluetooth settings. While it's open it follows Bluetooth: turned on or off, a device found,
+ * Bluetooth; under a "Paired" caption the paired devices, the connected first, OK connecting or
+ * disconnecting one; under "Available" the devices around that aren't paired, found by a search
+ * started as the menu opens, OK pairing one (the TV asks to confirm) and connecting it once paired;
+ * then Android's Bluetooth settings. Each device with its kind's icon: headphones, keyboard. While it's open it follows Bluetooth: turned on or off, a device found,
  * paired, connected or gone, it shows again, the focused row keeping its focus.
  */
 @SuppressLint("MissingPermission") // the permissions asked for from API 31 (show)
@@ -121,12 +121,8 @@ internal class BluetoothMenu(private val activity: Activity) {
         val keyed = linkedMapOf<String, View>()
         val list = mutableListOf<View>()
 
-        val header = menu.header(
-            "Bluetooth",
-            status = connected.firstOrNull()?.let { "Connected to ${name(it)}" },
-            on = on,
-            closes = false,
-        ) {
+        // No status under the title: the connected device says so in its row.
+        val header = menu.header("Bluetooth", status = null, on = on, closes = false) {
             if (on) adapter.disable() else adapter.enable()
             toast(if (on) "Turning Bluetooth off…" else "Turning Bluetooth on…")
         }
@@ -136,30 +132,29 @@ internal class BluetoothMenu(private val activity: Activity) {
             list.add(menu.divider())
             list.add(menu.note("Turn on Bluetooth to see devices"))
         } else {
+            // Two sections under small captions: the paired devices, then the ones around.
+            if (paired.isNotEmpty()) list.add(menu.caption("Paired"))
             for (device in paired) {
                 val isConnected = device in connected
                 val row = menu.row(
-                    R.drawable.home_ic_bluetooth, name(device), if (isConnected) "Connected" else "Paired",
+                    icon(device), name(device), if (isConnected) "Connected" else null,
                     statusGreen = isConnected, closes = false,
                 ) { toggle(device, isConnected) }
                 keyed[device.address] = row
                 list.add(row)
             }
-            list.add(menu.divider())
             val searching = runCatching { adapter.isDiscovering }.getOrDefault(false)
+            list.add(menu.caption(if (searching) "Available  ·  Searching…" else "Available"))
             for (device in found.values) {
                 val row = menu.row(
-                    R.drawable.home_ic_bluetooth, name(device), if (device.address == pairing) "Pairing…" else "Available",
-                    closes = false,
+                    icon(device), name(device), if (device.address == pairing) "Pairing…" else null, closes = false,
                 ) { pair(device) }
                 keyed[device.address] = row
                 list.add(row)
             }
-            if (searching) {
-                list.add(menu.note(if (found.isEmpty()) "Searching for devices…" else "Searching…"))
-            } else {
-                if (found.isEmpty()) list.add(menu.note("No other devices found"))
-                val again = menu.row(UiR.drawable.icon_plus, "Search again", null, closes = false) { search() }
+            if (!searching) {
+                if (found.isEmpty()) list.add(menu.note("No devices found"))
+                val again = menu.row(R.drawable.home_ic_refresh, "Search again", null, closes = false) { search() }
                 keyed[SEARCH] = again
                 list.add(again)
             }
@@ -228,6 +223,13 @@ internal class BluetoothMenu(private val activity: Activity) {
         if (!listening) return
         listening = false
         runCatching { app.unregisterReceiver(events) }
+    }
+
+    /** Headphones for an audio device, a keyboard for an input one (keyboard, remote, gamepad), else Bluetooth's. */
+    private fun icon(device: BluetoothDevice): Int = when {
+        BluetoothProfiles.isAudio(device) -> R.drawable.home_ic_headphones
+        device.bluetoothClass?.majorDeviceClass == BluetoothClass.Device.Major.PERIPHERAL -> R.drawable.home_ic_keyboard
+        else -> R.drawable.home_ic_bluetooth
     }
 
     private fun name(device: BluetoothDevice): String = device.name?.takeIf { it.isNotBlank() } ?: device.address

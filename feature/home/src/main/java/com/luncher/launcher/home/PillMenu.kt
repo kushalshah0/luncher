@@ -227,7 +227,7 @@ internal class PillMenu(private val activity: Activity) {
     }.apply {
         setBackgroundColor(DIVIDER)
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply {
-            setMargins(dp(12), dp(6), dp(12), dp(6))
+            setMargins(dp(12), dp(10), dp(12), dp(10))   // room around it: the menu reads as sections
         }
     }
 

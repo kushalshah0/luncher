@@ -26,6 +26,7 @@ import com.luncher.launcher.ui.R as UiR
  * paired, connected or gone, it shows again, the focused row keeping its focus.
  */
 @SuppressLint("MissingPermission") // the permissions asked for from API 31 (show)
+@Suppress("DEPRECATION") // enable/disable and getParcelableExtra(String): the only ones on the Android 9 box
 internal class BluetoothMenu(private val activity: Activity) {
 
     private val app: Context = activity.applicationContext

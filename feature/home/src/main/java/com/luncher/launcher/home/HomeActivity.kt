@@ -65,6 +65,7 @@ class HomeActivity : Activity() {
     private lateinit var status: StatusIndicators
     private lateinit var wifiPicker: WifiPicker
     private lateinit var vpnMenu: VpnMenu
+    private lateinit var bluetoothMenu: BluetoothMenu
     private lateinit var empty: TextView
     private lateinit var move: MoveMode
     private lateinit var wallpaper: HomeWallpaper
@@ -142,6 +143,8 @@ class HomeActivity : Activity() {
         vpnMenu = VpnMenu(this)
         status.vpn.setOnClickListener { vpnMenu.show(status.vpn) }
         status.usb.setOnClickListener { status.openStorage() }
+        bluetoothMenu = BluetoothMenu(this)
+        status.bluetooth.setOnClickListener { bluetoothMenu.show(status.bluetooth) }
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) { tiles.frost = it }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
@@ -227,6 +230,7 @@ class HomeActivity : Activity() {
         when (requestCode) {
             WifiPicker.REQUEST_LOCATION -> wifiPicker.showAgain()
             VpnMenu.REQUEST_CONTROL_TUNNELS -> vpnMenu.turnOff()
+            BluetoothMenu.REQUEST_BLUETOOTH -> bluetoothMenu.showAgain()
         }
     }
 
@@ -274,6 +278,7 @@ class HomeActivity : Activity() {
         tiles.tileGeometry = appearance.tileGeometry
         tiles.tileStyle = appearance.tileStyle
         topBar.appearance = appearance.topBar
+        status.shown = appearance.topBar
         wallpaper.show(appearance.background)
         showTheme(appearance.theme)
         // Another tile size: the pictures prepared for it.

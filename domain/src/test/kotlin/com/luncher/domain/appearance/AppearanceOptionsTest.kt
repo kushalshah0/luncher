@@ -29,7 +29,11 @@ class AppearanceOptionsTest {
             catalog.groups[0].options,
         )
         assertEquals(
-            listOf(AppearanceOption.ShowTime, AppearanceOption.ShowDate, AppearanceOption.ClockSide, AppearanceOption.TimeSide),
+            listOf(
+                AppearanceOption.ShowTime, AppearanceOption.ShowDate, AppearanceOption.ClockSide, AppearanceOption.TimeSide,
+                AppearanceOption.ShowNetwork, AppearanceOption.ShowMemory, AppearanceOption.ShowBluetooth,
+                AppearanceOption.ShowUsb, AppearanceOption.ShowVpn,
+            ),
             catalog.groups[1].options,
         )
     }

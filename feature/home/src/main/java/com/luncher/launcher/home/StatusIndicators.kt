@@ -23,6 +23,7 @@ import android.provider.Settings
 import android.widget.Toast
 import android.view.View
 import android.widget.TextView
+import com.luncher.domain.appearance.TopBarAppearance
 import java.io.File
 
 /**
@@ -56,6 +57,13 @@ internal class StatusIndicators(row: View) {
 
     private var networkIcon = 0
 
+    /** Which pills the user wants ([TopBarAppearance]'s show flags); USB and VPN show only while there's one. */
+    var shown: TopBarAppearance = TopBarAppearance()
+        set(value) {
+            field = value
+            show()
+        }
+
     /** While the clean-up's message shows (elapsedRealtime), the RAM pill isn't updated. */
     private var ramMessageUntil = 0L
 
@@ -77,10 +85,16 @@ internal class StatusIndicators(row: View) {
         showNetwork()
         showAppsCleared()
         if (SystemClock.elapsedRealtime() >= ramMessageUntil) ram.text = "${freeMb()} MB"
-        usb.visibility = if (usbMounted()) View.VISIBLE else View.GONE
-        vpn.visibility = if (vpnConnected()) View.VISIBLE else View.GONE
-        bluetooth.visibility = if (bluetoothConnected()) View.VISIBLE else View.GONE
+        network.visibility = visibleIf(shown.showNetwork)
+        ram.visibility = visibleIf(shown.showMemory)
+        usb.visibility = visibleIf(shown.showUsb && usbMounted())
+        vpn.visibility = visibleIf(shown.showVpn && vpnConnected())
+        // Always there while shown, as the Bluetooth menu's entry; dimmed while nothing is connected.
+        bluetooth.visibility = visibleIf(shown.showBluetooth)
+        bluetooth.alpha = if (bluetoothConnected()) 1f else DIMMED
     }
+
+    private fun visibleIf(shown: Boolean) = if (shown) View.VISIBLE else View.GONE
 
     /**
      * The kernel's MemAvailable: some boxes' firmware inflates what ActivityManager reports (a 1 GB
@@ -220,6 +234,8 @@ internal class StatusIndicators(row: View) {
         const val REPORT_WAIT_MS = 800L
         const val TV_SETTINGS = "com.android.tv.settings"
         const val MEMINFO = "/proc/meminfo"
+        /** The Bluetooth pill while nothing is connected. */
+        const val DIMMED = 0.5f
         /** BluetoothProfile.HID_HOST is 4, but public only from API 33. */
         const val HID_HOST = 4
         val BT_PROFILES = listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET, HID_HOST)

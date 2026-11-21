@@ -46,6 +46,11 @@ fun appearanceOptions(): AppearanceOptions =
                     AppearanceOption.ShowDate,
                     AppearanceOption.ClockSide,
                     AppearanceOption.TimeSide,
+                    AppearanceOption.ShowNetwork,
+                    AppearanceOption.ShowMemory,
+                    AppearanceOption.ShowBluetooth,
+                    AppearanceOption.ShowUsb,
+                    AppearanceOption.ShowVpn,
                 ),
             ),
             AppearanceGroup(

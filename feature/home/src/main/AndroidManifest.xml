@@ -14,6 +14,9 @@
     <!-- The Bluetooth pill: whether a device is connected. A runtime permission from API 31, not
          asked for: without it the pill stays hidden. -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <!-- The Bluetooth menu: turning Bluetooth on and off, searching for devices, pairing and connecting one. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- The VPN menu (VpnMenu): turns WireGuard's tunnel off. WireGuard's own permission, a
          dangerous one, asked for the first time; and WireGuard visible (API 30+), to open it. -->

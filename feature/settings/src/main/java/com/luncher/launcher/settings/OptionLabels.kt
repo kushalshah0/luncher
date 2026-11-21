@@ -73,6 +73,11 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
         AppearanceOption.ShowDate -> R.string.settings_appearance_date
         AppearanceOption.ClockSide -> R.string.settings_appearance_clock_side
         AppearanceOption.TimeSide -> R.string.settings_appearance_time_side
+        AppearanceOption.ShowNetwork -> R.string.settings_appearance_pill_network
+        AppearanceOption.ShowMemory -> R.string.settings_appearance_pill_memory
+        AppearanceOption.ShowBluetooth -> R.string.settings_appearance_pill_bluetooth
+        AppearanceOption.ShowUsb -> R.string.settings_appearance_pill_usb
+        AppearanceOption.ShowVpn -> R.string.settings_appearance_pill_vpn
         AppearanceOption.AccentColor -> R.string.settings_appearance_accent
         AppearanceOption.ThemeMode -> R.string.settings_appearance_mode
         AppearanceOption.BackgroundFit -> R.string.settings_appearance_fit
@@ -96,6 +101,11 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
         AppearanceOption.ShowDate -> context.getString(shown(AppearanceOption.ShowDate.get(model)))
         AppearanceOption.ClockSide -> context.getString(side(AppearanceOption.ClockSide.get(model)))
         AppearanceOption.TimeSide -> context.getString(order(AppearanceOption.TimeSide.get(model)))
+        AppearanceOption.ShowNetwork -> context.getString(shown(AppearanceOption.ShowNetwork.get(model)))
+        AppearanceOption.ShowMemory -> context.getString(shown(AppearanceOption.ShowMemory.get(model)))
+        AppearanceOption.ShowBluetooth -> context.getString(shown(AppearanceOption.ShowBluetooth.get(model)))
+        AppearanceOption.ShowUsb -> context.getString(shown(AppearanceOption.ShowUsb.get(model)))
+        AppearanceOption.ShowVpn -> context.getString(shown(AppearanceOption.ShowVpn.get(model)))
         AppearanceOption.AccentColor -> context.getString(accent(AppearanceOption.AccentColor.get(model)))
         AppearanceOption.ThemeMode -> context.getString(mode(AppearanceOption.ThemeMode.get(model)))
         AppearanceOption.BackgroundFit -> context.getString(fit(AppearanceOption.BackgroundFit.get(model)))

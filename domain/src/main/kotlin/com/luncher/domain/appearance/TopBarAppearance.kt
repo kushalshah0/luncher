@@ -13,4 +13,14 @@ data class TopBarAppearance(
     val showTime: Boolean = true,
     /** Whether the bar shows the date. */
     val showDate: Boolean = true,
+    /** Whether the bar shows the network pill (NETTV fork); it opens the Wi-Fi menu. */
+    val showNetwork: Boolean = true,
+    /** Whether the bar shows the free-memory pill (NETTV fork). */
+    val showMemory: Boolean = true,
+    /** Whether the bar shows the Bluetooth pill (NETTV fork); it opens the Bluetooth menu. */
+    val showBluetooth: Boolean = true,
+    /** Whether the bar shows the USB pill (NETTV fork), while a drive is mounted. */
+    val showUsb: Boolean = true,
+    /** Whether the bar shows the VPN pill (NETTV fork), while a VPN is connected. */
+    val showVpn: Boolean = true,
 )

@@ -124,6 +124,46 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun appliesTo(model: Appearance, context: AppearanceContext) = model.topBar.showTime && model.topBar.showDate
     }
 
+    /** Whether the top bar shows the network pill (NETTV fork). */
+    data object ShowNetwork : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(model: Appearance) = model.topBar.showNetwork
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(topBar = model.topBar.copy(showNetwork = value))
+    }
+
+    /** Whether the top bar shows the free-memory pill (NETTV fork). */
+    data object ShowMemory : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(model: Appearance) = model.topBar.showMemory
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(topBar = model.topBar.copy(showMemory = value))
+    }
+
+    /** Whether the top bar shows the Bluetooth pill (NETTV fork). */
+    data object ShowBluetooth : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(model: Appearance) = model.topBar.showBluetooth
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(topBar = model.topBar.copy(showBluetooth = value))
+    }
+
+    /** Whether the top bar shows the USB pill (NETTV fork), while a drive is mounted. */
+    data object ShowUsb : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(model: Appearance) = model.topBar.showUsb
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(topBar = model.topBar.copy(showUsb = value))
+    }
+
+    /** Whether the top bar shows the VPN pill (NETTV fork), while a VPN is connected. */
+    data object ShowVpn : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(model: Appearance) = model.topBar.showVpn
+        override fun set(model: Appearance, value: Boolean) =
+            model.copy(topBar = model.topBar.copy(showVpn = value))
+    }
+
     /** The accent color of the menus and settings, and of the home screen's focus frames. */
     data object AccentColor : AppearanceOption<Accent> {
         override val values: List<Accent> = Accent.entries

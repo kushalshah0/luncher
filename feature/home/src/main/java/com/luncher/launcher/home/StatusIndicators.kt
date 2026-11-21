@@ -1,10 +1,15 @@
 package com.luncher.launcher.home
 
+import android.Manifest
 import android.app.ActivityManager
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
@@ -22,8 +27,8 @@ import java.io.File
 
 /**
  * The home screen's status pills (NETTV fork), beside the settings entry: the network (Wi-Fi,
- * Ethernet, or offline), the free memory, USB while a USB drive is mounted, and a key while a VPN
- * is connected. Read every [INTERVAL_MS] while the home screen is visible: the
+ * Ethernet, or offline), the free memory, USB while a USB drive is mounted, a key while a VPN
+ * is connected, and Bluetooth while a Bluetooth device is. Read every [INTERVAL_MS] while the home screen is visible: the
  * screen calls [start] and [stop] with the clock's, so a hidden home screen does no work.
  *
  * [openStorage] (OK on the USB pill) opens the TV's storage settings.
@@ -40,6 +45,7 @@ internal class StatusIndicators(row: View) {
     val ram: TextView = row.findViewById(R.id.home_status_ram)
     val usb: TextView = row.findViewById(R.id.home_status_usb)
     val vpn: TextView = row.findViewById(R.id.home_status_vpn)
+    val bluetooth: TextView = row.findViewById(R.id.home_status_bluetooth)
 
     private val context: Context = row.context.applicationContext
     private val handler = Handler(Looper.getMainLooper())
@@ -73,9 +79,16 @@ internal class StatusIndicators(row: View) {
         if (SystemClock.elapsedRealtime() >= ramMessageUntil) ram.text = "${freeMb()} MB"
         usb.visibility = if (usbMounted()) View.VISIBLE else View.GONE
         vpn.visibility = if (vpnConnected()) View.VISIBLE else View.GONE
+        bluetooth.visibility = if (bluetoothConnected()) View.VISIBLE else View.GONE
     }
 
+    /**
+     * The kernel's MemAvailable: some boxes' firmware inflates what ActivityManager reports (a 1 GB
+     * Q96+ claims 4 GB, and over 2 GB free), while /proc/meminfo's MemAvailable stays real.
+     * ActivityManager's figure only where that line can't be read.
+     */
     private fun freeMb(): Long {
+        runCatching { memAvailableMb(File(MEMINFO).readText()) }.getOrNull()?.let { return it }
         activities.getMemoryInfo(memory)
         return memory.availMem / MB
     }
@@ -103,6 +116,20 @@ internal class StatusIndicators(row: View) {
     @Suppress("DEPRECATION") // allNetworks (API 31): a NetworkCallback would do, but this is read every tick anyway.
     private fun vpnConnected(): Boolean = connectivity.allNetworks.any {
         connectivity.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+    }
+
+    /**
+     * Whether a Bluetooth device is connected: headphones or a speaker (A2DP), a headset, or a
+     * keyboard, remote or gamepad (HID host). From API 31 only with BLUETOOTH_CONNECT granted.
+     */
+    private fun bluetoothConnected(): Boolean {
+        if (Build.VERSION.SDK_INT >= 31 &&
+            context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
+        ) return false
+        val adapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter ?: return false
+        return runCatching {
+            adapter.isEnabled && BT_PROFILES.any { adapter.getProfileConnectionState(it) == BluetoothAdapter.STATE_CONNECTED }
+        }.getOrDefault(false)
     }
 
     /** Whether a removable drive is mounted; StorageVolume lists them from API 24 only. */
@@ -192,5 +219,15 @@ internal class StatusIndicators(row: View) {
         /** How long "Cleaning…" shows before the Apps button's result: it's done already. */
         const val REPORT_WAIT_MS = 800L
         const val TV_SETTINGS = "com.android.tv.settings"
+        const val MEMINFO = "/proc/meminfo"
+        /** BluetoothProfile.HID_HOST is 4, but public only from API 33. */
+        const val HID_HOST = 4
+        val BT_PROFILES = listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET, HID_HOST)
     }
 }
+
+/** MemAvailable from /proc/meminfo's [text], in MB; null when the line is missing (kernels before 3.14). */
+internal fun memAvailableMb(text: String): Long? = text.lineSequence()
+    .firstOrNull { it.startsWith("MemAvailable:") }
+    ?.split(Regex("\\s+"))?.getOrNull(1)?.toLongOrNull()
+    ?.let { it / 1024 }

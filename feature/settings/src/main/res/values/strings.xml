@@ -116,10 +116,10 @@
     <string name="settings_appearance_reset_text_background">Every option goes back to its default: the home screen will have no picture. The picture stays in Luncher\'s pictures.</string>
     <string name="settings_appearance_reset_confirm">Reset</string>
     <!-- The entry that opens the TV's own settings (else the device's). -->
-    <string name="settings_system">TV settings</string>
+    <string name="settings_system">System settings</string>
     <!-- A message, when the device has no settings app to open. -->
     <string name="settings_system_unavailable">No settings app on this device</string>
-    <!-- The entry that opens Android's phone-style settings app, beside the TV's. -->
+    <!-- The entry that opens Android's phone-style settings app, beside the TV's; listed only where it is installed. -->
     <string name="settings_android">Android settings</string>
     <!-- A message, when the device has no such app. -->
     <string name="settings_android_unavailable">No Android settings app on this device</string>

@@ -52,7 +52,7 @@
     <string name="settings_appearance_reset_text">يعود كل خيار إلى قيمته الافتراضية.</string>
     <string name="settings_appearance_reset_text_background">يعود كل خيار إلى قيمته الافتراضية: لن تعرض الشاشة الرئيسية أي صورة. تبقى الصورة في صور Luncher.</string>
     <string name="settings_appearance_reset_confirm">استعادة</string>
-    <string name="settings_system">إعدادات التلفزيون</string>
+    <string name="settings_system">إعدادات النظام</string>
     <string name="settings_system_unavailable">لا يوجد تطبيق إعدادات على هذا الجهاز</string>
     <string name="settings_android">إعدادات Android</string>
     <string name="settings_android_unavailable">لا يوجد تطبيق إعدادات Android على هذا الجهاز</string>

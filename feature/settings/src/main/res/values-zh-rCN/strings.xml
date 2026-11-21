@@ -51,7 +51,7 @@
     <string name="settings_appearance_reset_text">所有外观设置将恢复默认。</string>
     <string name="settings_appearance_reset_text_background">所有外观设置将恢复默认，主页将不再显示背景图片。图片仍保留在图片库中。</string>
     <string name="settings_appearance_reset_confirm">恢复</string>
-    <string name="settings_system">电视设置</string>
+    <string name="settings_system">系统设置</string>
     <string name="settings_system_unavailable">未找到系统设置</string>
     <string name="settings_android">Android 设置</string>
     <string name="settings_android_unavailable">未找到 Android 设置</string>

@@ -112,6 +112,14 @@
                     android:contentDescription="@string/home_status_vpn"
                     android:drawableLeft="@drawable/home_ic_vpn"
                     android:visibility="gone" />
+
+                <!-- Only while a Bluetooth device is connected: headphones, a speaker, a keyboard or remote. -->
+                <TextView
+                    android:id="@+id/home_status_bluetooth"
+                    style="@style/HomeStatusPill.Icon"
+                    android:contentDescription="@string/home_status_bluetooth"
+                    android:drawableLeft="@drawable/home_ic_bluetooth"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <!-- Opens the settings panel (NETTV fork: a pill like the status ones, gear and "Settings").

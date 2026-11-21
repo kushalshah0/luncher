@@ -11,6 +11,10 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- The RAM pill's clean-up: stops other apps' background processes. -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <!-- The Bluetooth pill: whether a device is connected. A runtime permission from API 31, not
+         asked for: without it the pill stays hidden. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- The VPN menu (VpnMenu): turns WireGuard's tunnel off. WireGuard's own permission, a
          dangerous one, asked for the first time; and WireGuard visible (API 30+), to open it. -->
     <uses-permission android:name="com.wireguard.android.permission.CONTROL_TUNNELS" />

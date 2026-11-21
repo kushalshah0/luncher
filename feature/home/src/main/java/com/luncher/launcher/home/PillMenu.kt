@@ -108,10 +108,10 @@ internal class PillMenu(private val activity: Activity) {
 
     /**
      * The menu's first row: [title], medium weight, [status] under it if any, and a switch showing
-     * [on]. OK closes the menu, then runs [onToggle].
+     * [on]. OK closes the menu (unless not [closes]), then runs [onToggle].
      */
-    fun header(title: String, status: String?, on: Boolean, onToggle: () -> Unit): View =
-        focusableRow(closes = true, onToggle).apply {
+    fun header(title: String, status: String?, on: Boolean, closes: Boolean = true, onToggle: () -> Unit): View =
+        focusableRow(closes, onToggle).apply {
             addView(LinearLayout(activity).apply {
                 orientation = LinearLayout.VERTICAL
                 isDuplicateParentStateEnabled = true

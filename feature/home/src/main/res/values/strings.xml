@@ -10,6 +10,7 @@
     <string name="home_settings">Settings</string>
     <!-- The top bar's VPN pill, shown while a VPN is connected, for screen readers. -->
     <string name="home_status_vpn">VPN</string>
+    <string name="home_status_bluetooth">Bluetooth</string>
     <!-- The menu a long press of OK on an app's tile opens, over the home screen: what the user
          can do to that app. Move: move its tile to another place on the home screen. -->
     <string name="home_menu_move">Move</string>

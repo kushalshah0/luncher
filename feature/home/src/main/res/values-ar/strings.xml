@@ -6,6 +6,7 @@
     <string name="home_all_hidden">كل التطبيقات مخفية. افتح <xliff:g id="settings" example="الإعدادات">%1$s</xliff:g> ← <xliff:g id="hide_apps" example="إخفاء التطبيقات">%2$s</xliff:g> لإظهارها مجددًا.</string>
     <string name="home_settings">الإعدادات</string>
     <string name="home_status_vpn">VPN</string>
+    <string name="home_status_bluetooth">بلوتوث</string>
     <string name="home_menu_move">نقل</string>
     <string name="home_menu_hide">إخفاء</string>
     <string name="home_menu_rename">إعادة تسمية</string>

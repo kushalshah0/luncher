@@ -36,7 +36,7 @@ class SettingsActivity : Activity() {
         panel = findViewById(R.id.settings_panel)
         placeAsSheet(panel, graph.appearanceSettings.read().topBar)
         entries = findViewById(R.id.settings_entries)
-        show(settingsMenu())
+        show(settingsMenu().filter { it != SettingsEntry.AndroidSettings || androidSettingsInstalled() })
         panel.stylePanel(theme.roles)
         entries.getChildAt(0)?.requestFocus()
     }
@@ -127,6 +127,10 @@ class SettingsActivity : Activity() {
             Toast.makeText(this, R.string.settings_android_unavailable, Toast.LENGTH_SHORT).show()
         }
     }
+
+    /** Whether Android's phone-style settings are installed: their entry is listed only then. */
+    private fun androidSettingsInstalled(): Boolean =
+        packageManager.resolveActivity(Intent(Settings.ACTION_SETTINGS).setPackage(ANDROID_SETTINGS), 0) != null
 
     /**
      * The TV's settings, e.g. com.android.tv.settings/.MainSettings, by name: their activity lacks

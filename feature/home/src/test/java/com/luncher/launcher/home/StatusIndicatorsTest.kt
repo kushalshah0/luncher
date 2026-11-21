@@ -30,7 +30,7 @@ class StatusIndicatorsTest {
 
     /** The pills' row, as the home screen's layout has it. */
     private val row = LinearLayout(context).apply {
-        for (id in listOf(R.id.home_status_network, R.id.home_status_ram, R.id.home_status_usb, R.id.home_status_vpn)) {
+        for (id in listOf(R.id.home_status_network, R.id.home_status_ram, R.id.home_status_usb, R.id.home_status_vpn, R.id.home_status_bluetooth)) {
             addView(TextView(context).also { it.id = id; it.visibility = View.GONE })
         }
     }
@@ -63,6 +63,14 @@ class StatusIndicatorsTest {
 
         assertTrue(ramPill().endsWith(" MB"))
         assertFalse(report.exists())
+    }
+
+    @Test
+    fun `free memory is the kernel's MemAvailable, not the firmware's inflated total`() {
+        // A Q96+ box: MemTotal and MemFree are faked (4 GB, 2 GB), MemAvailable is real.
+        val meminfo = "MemTotal:        4194304 kB\nMemFree:         2150344 kB\nMemAvailable:     351164 kB\n"
+        assertEquals(342L, memAvailableMb(meminfo))
+        assertEquals(null, memAvailableMb("MemTotal:        4194304 kB\nMemFree:         2150344 kB\n"))
     }
 
     private fun vpnPill(): Int {

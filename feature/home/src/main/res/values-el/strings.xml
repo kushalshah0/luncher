@@ -5,6 +5,7 @@
     <string name="home_all_hidden">Όλες οι εφαρμογές είναι κρυφές. Ανοίξτε <xliff:g id="settings" example="Ρυθμίσεις">%1$s</xliff:g> → <xliff:g id="hide_apps" example="Απόκρυψη εφαρμογών">%2$s</xliff:g> για να τις εμφανίσετε ξανά.</string>
     <string name="home_settings">Ρυθμίσεις</string>
     <string name="home_status_vpn">VPN</string>
+    <string name="home_status_bluetooth">Bluetooth</string>
     <string name="home_menu_move">Μετακίνηση</string>
     <string name="home_menu_hide">Απόκρυψη</string>
     <string name="home_menu_rename">Μετονομασία</string>

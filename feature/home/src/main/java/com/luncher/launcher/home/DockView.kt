@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
@@ -36,12 +35,13 @@ import kotlin.math.sin
  * docked apps as round icons ([DockIcons]) on a curved glass shelf at the bottom, in the middle, as
  * the dock of a Mac. The focused icon is magnified, its neighbors less ([DockLayout]), the wave
  * gliding as Left and Right move the focus, the shelf widening under it; the focused app's name
- * shows above it in a bubble. OK opens the app, with a bounce; a long press of OK opens its menu
+ * shows above it in a label, as a Mac's: a capsule pointing down at it, and a small dot under
+ * it, as the Mac's under an open app; no ring, the magnification shows the focus. OK opens the app, with a bounce; a long press of OK opens its menu
  * ([onMenu]); Up goes to the top bar, by Android's focus search.
  *
  * The shelf: its outline curved as a Mac dock's (continuous-curvature corners, [DockShape]), never
  * a rectangle; filled with the wallpaper's frosted copy behind it (the one the Frosted tiles use,
- * [frost]: no blur of its own) and a light or dark tint, a sheen along its top and a rim, over a
+ * [frost]: no blur of its own) and a light or dark tint, edged with a hairline, as a Mac's, over a
  * soft shadow drawn as a few faint offset outlines (a blur's shadow is costly on the TV's GPU).
  *
  * One view, no child views: each frame of a glide draws a few paths and a bitmap per icon, and
@@ -120,12 +120,13 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
 
     // Sizes, in px, set with the appearance.
     private var bottomMargin = 0f
-    private var ring = 0f
-    private var ringGap = 0f
     private var lift = 0f
     private var bounceHeight = 0f
     private val bubbleHeight = 30 * density
-    private val bubbleGap = 10 * density
+    private val bubbleGap = 12 * density
+    private val caretWidth = 12 * density
+    private val caretHeight = 6 * density
+    private val dotRadius = 2 * density
     private val bubblePadding = 14 * density
     private val sidePadding = 48 * density
     private val shadowDrop = 3 * density
@@ -141,9 +142,13 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
     private val frostPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val frostMatrix = Matrix()
     private val tintPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val sheenPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = density }
-    private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = Color.WHITE }
+    /** The shelf's edge: a hairline, light, as a Mac dock's. */
+    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = (0.75f * density).coerceAtLeast(1f)
+    }
+    private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+    private val caret = Path()
     private val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(205, 28, 28, 30) }
     private val bubbleRimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -157,9 +162,6 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
     }
     private val moveHint = resources.getString(R.string.home_dock_move_hint)
 
-    /** The gradients' place: made again only when the shelf's height or top moves. */
-    private var shadedTop = Float.NaN
-    private var shadedBottom = Float.NaN
     private val location = IntArray(2)
 
     // The focus gliding from one icon to another: a position between them, eased.
@@ -222,13 +224,9 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
             scales = FloatArray(apps.size)
         }
         bottomMargin = resources.getDimension(R.dimen.home_padding_vertical)
-        ring = (icon / 28).coerceAtLeast(2 * density)
-        ringGap = (icon / 22).coerceAtLeast(2 * density)
         lift = icon * 0.22f
         bounceHeight = icon * 0.32f
-        ringPaint.strokeWidth = ring
         icons.size = (layout.largestIconPx * PRESSED_MAX).roundToInt()
-        shadedTop = Float.NaN
         requestLayout()
         invalidate()
     }
@@ -236,7 +234,7 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val layout = layout
         val tall = if (layout == null) 0f else {
-            bottomMargin + layout.paddingPx + layout.largestIconPx + ring + ringGap + maxOf(lift, bounceHeight) + bubbleGap + bubbleHeight + 8 * density
+            bottomMargin + layout.paddingPx + layout.largestIconPx + maxOf(lift, bounceHeight) + bubbleGap + bubbleHeight + 8 * density
         }
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), resolveSize(tall.roundToInt(), heightMeasureSpec))
     }
@@ -385,6 +383,7 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
         val iconBottom = shelfBottom - layout.paddingPx
         for (i in 0 until count) if (i != selected) drawIcon(canvas, i, left, iconBottom, layout.iconPx, amount)
         drawIcon(canvas, selected, left, iconBottom, layout.iconPx, amount)
+        if (amount > 0f) drawDot(canvas, left + centers[selected], shelfBottom, layout.paddingPx, amount)
         if (amount > 0f) drawBubble(canvas, amount)
     }
 
@@ -399,7 +398,6 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
     private fun drawShelf(canvas: Canvas, left: Float, top: Float, right: Float, bottom: Float) {
         shelfBounds.set(left, top, right, bottom)
         shelfOutline(shelfPath, shelfBounds, appearance.shape)
-        shade(top, bottom)
         val dark = appearance.shelf == DockShelf.DARK
         // A soft shadow under it: the outline, faint, a little lower each time.
         for (layer in 1..SHADOW_LAYERS) {
@@ -416,19 +414,8 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
             else -> Color.argb(52, 255, 255, 255)
         }
         canvas.drawPath(shelfPath, tintPaint)
-        canvas.drawPath(shelfPath, sheenPaint)
-        rimPaint.alpha = if (dark) 150 else 255
+        rimPaint.color = Color.argb(if (dark) 46 else 72, 255, 255, 255)
         canvas.drawPath(shelfPath, rimPaint)
-    }
-
-    /** The sheen and the rim's gradients, from the shelf's top down: made again only when it moves. */
-    private fun shade(top: Float, bottom: Float) {
-        if (top == shadedTop && bottom == shadedBottom) return
-        shadedTop = top
-        shadedBottom = bottom
-        val height = bottom - top
-        sheenPaint.shader = LinearGradient(0f, top, 0f, top + height * 0.6f, Color.argb(60, 255, 255, 255), Color.TRANSPARENT, Shader.TileMode.CLAMP)
-        rimPaint.shader = LinearGradient(0f, top, 0f, bottom, Color.argb(150, 255, 255, 255), Color.argb(40, 255, 255, 255), Shader.TileMode.CLAMP)
     }
 
     private fun drawIcon(canvas: Canvas, index: Int, left: Float, bottom: Float, rest: Float, amount: Float) {
@@ -445,17 +432,16 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
         iconBounds.set(center - size / 2, lifted - size, center + size / 2, lifted)
         canvas.drawCircle(iconBounds.centerX(), iconBounds.centerY() + shadowDrop, size / 2, iconShadowPaint)
         canvas.drawBitmap(icons.icon(apps[index]), null, iconBounds, iconPaint)
-        if (focused && amount > 0f) {
-            ringPaint.alpha = (255 * amount).toInt()
-            canvas.drawCircle(iconBounds.centerX(), iconBounds.centerY(), size / 2 + ringGap + ring / 2, ringPaint)
-        }
-        if (focused) {
-            // Kept for the bubble and the menu: the focused icon is drawn last.
-            iconBounds.inset(-(ringGap + ring), -(ringGap + ring))
-        }
+        // The focused icon is drawn last: its bounds stay for the label and the menu.
     }
 
-    /** The focused app's name, or how to move it, in a dark glass bubble above its icon. */
+    /** The dot under the focused icon, as a Mac's under an open app: its size fixed, in the shelf's bottom padding. */
+    private fun drawDot(canvas: Canvas, center: Float, shelfBottom: Float, padding: Float, amount: Float) {
+        dotPaint.alpha = (DOT_ALPHA * amount).toInt()
+        canvas.drawCircle(center, shelfBottom - padding / 2, dotRadius, dotPaint)
+    }
+
+    /** The focused app's name, or how to move it, in a dark glass capsule above its icon, pointing down at it, as a Mac's. */
     private fun drawBubble(canvas: Canvas, amount: Float) {
         if (!appearance.showName && !moving) return
         val text = if (moving) moveHint else focusedApp?.name ?: return
@@ -463,12 +449,18 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
         val center = iconBounds.centerX().coerceIn(half, width - half)
         val bottom = iconBounds.top - bubbleGap
         bubble.set(center - half, bottom - bubbleHeight, center + half, bottom)
+        caret.reset()
+        caret.moveTo(iconBounds.centerX() - caretWidth / 2, bottom - 1)
+        caret.lineTo(iconBounds.centerX() + caretWidth / 2, bottom - 1)
+        caret.lineTo(iconBounds.centerX(), bottom + caretHeight)
+        caret.close()
         val alpha = (255 * amount).toInt()
         bubblePaint.alpha = (205 * amount).toInt()
         bubbleRimPaint.alpha = (60 * amount).toInt()
         textPaint.alpha = alpha
         val radius = bubbleHeight / 2
         canvas.drawRoundRect(bubble, radius, radius, bubblePaint)
+        canvas.drawPath(caret, bubblePaint)
         canvas.drawRoundRect(bubble, radius, radius, bubbleRimPaint)
         val baseline = bubble.centerY() - (textPaint.descent() + textPaint.ascent()) / 2
         canvas.drawText(text, bubble.centerX(), baseline, textPaint)
@@ -491,6 +483,9 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
 
         const val SHADOW_LAYERS = 3
         const val SHADOW_ALPHA = 46
+
+        /** The dot under the focused icon: about half white, as a Mac's. */
+        const val DOT_ALPHA = 150
 
         val OK_KEYS = intArrayOf(KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER)
     }

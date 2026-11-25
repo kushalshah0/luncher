@@ -8,7 +8,6 @@ import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.LinearGradient
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
@@ -30,7 +29,7 @@ import com.luncher.domain.apps.LaunchableApp
  * - A logo with no background: on a plate that fills the circle, light, or graphite under a light
  *   logo ([drawLegacy]).
  *
- * Every one gets the same finish, a light from the top and a faint rim, so the row reads as a set.
+ * No rim or gloss is added: each icon as it is, as a Mac's dock shows them.
  *
  * The icon is loaded at the highest density the app has, so a large dock icon isn't blurred from a
  * small one. Only the docked apps' icons are kept; [keepOnly] frees the others, and a new [size]
@@ -55,11 +54,6 @@ internal class DockIcons(context: Context) {
     private val cutPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val platePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val glossPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        color = Color.argb(RIM_ALPHA, 255, 255, 255)
-    }
 
     /** [app]'s round icon at [size], drawn the first time it's asked for. */
     fun icon(app: HomeApp): Bitmap = icons.getOrPut(app.launchable) { draw(app.launchable) }
@@ -96,11 +90,7 @@ internal class DockIcons(context: Context) {
         round.drawCircle(size / 2f, size / 2f, size / 2f, cutPaint)
         cutPaint.shader = null
         square.recycle()
-        // The same finish on every icon: a light from the top, and a faint rim, as glass catching it.
-        glossPaint.shader = LinearGradient(0f, 0f, 0f, size * GLOSS_DEPTH, Color.argb(GLOSS_ALPHA, 255, 255, 255), Color.TRANSPARENT, Shader.TileMode.CLAMP)
-        round.drawCircle(size / 2f, size / 2f, size / 2f, glossPaint)
-        rimPaint.strokeWidth = (size / RIM_PER_SIZE).coerceAtLeast(1f)
-        round.drawCircle(size / 2f, size / 2f, size / 2f - rimPaint.strokeWidth / 2, rimPaint)
+        // No rim, no gloss: the icon as it is, as a Mac's dock shows it.
         return bitmap
     }
 
@@ -230,14 +220,5 @@ internal class DockIcons(context: Context) {
         /** The plates: near white, as a Mac's, and graphite. */
         val LIGHT_PLATE = Color.rgb(242, 242, 247)
         val DARK_PLATE = Color.rgb(44, 44, 46)
-
-        /** The light from the top: how strong, and how far down the circle it fades out. */
-        const val GLOSS_ALPHA = 46
-        const val GLOSS_DEPTH = 0.55f
-
-        const val RIM_ALPHA = 70
-
-        /** The rim's width: the size over this, a pixel at least. */
-        const val RIM_PER_SIZE = 64f
     }
 }

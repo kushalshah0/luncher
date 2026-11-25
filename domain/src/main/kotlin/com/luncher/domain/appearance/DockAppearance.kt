@@ -44,8 +44,8 @@ enum class DockShelf {
  * radius as a part of the shelf's height.
  */
 enum class DockShape(val cornerRatio: Float) {
-    /** Continuous-curvature corners, as the dock of a Mac's: the curve runs into the edges. */
-    CURVED(0.42f),
+    /** Continuous-curvature corners, as the dock of a Mac's: the curve runs into the edges, about a third of its height. */
+    CURVED(0.3f),
 
     /** Fully round ends. */
     PILL(0.5f),

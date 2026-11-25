@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.os.SystemClock
 import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -53,7 +52,7 @@ internal class IdleClockView(context: Context, attrs: AttributeSet?) : View(cont
         override fun run() {
             invalidate()
             val now = System.currentTimeMillis()
-            postAtTime(this, SystemClock.uptimeMillis() + (1000 - now % 1000))
+            postDelayed(this, 1000 - now % 1000)
         }
     }
 

@@ -21,12 +21,13 @@ data class AppearanceGroup(
 )
 
 /** The part of the home screen a group's options change, or the theme; each screen names it in its language. */
-enum class AppearanceTopic { TILES, TOP_BAR, THEME, BACKGROUND }
+enum class AppearanceTopic { HOME, TILES, DOCK, TOP_BAR, THEME, BACKGROUND }
 
-/** The options the user can change, and where each one goes: the tiles', the top bar's, the theme's, then the background's. */
+/** The options the user can change, and where each one goes: the home mode, the tiles', the dock's, the top bar's, the theme's, then the background's. */
 fun appearanceOptions(): AppearanceOptions =
     AppearanceOptions(
         listOf(
+            AppearanceGroup(AppearanceTopic.HOME, listOf(AppearanceOption.HomeMode)),
             AppearanceGroup(
                 AppearanceTopic.TILES,
                 listOf(
@@ -37,6 +38,16 @@ fun appearanceOptions(): AppearanceOptions =
                     AppearanceOption.CornerRadius,
                     AppearanceOption.FocusFrame,
                     AppearanceOption.AppName,
+                ),
+            ),
+            AppearanceGroup(
+                AppearanceTopic.DOCK,
+                listOf(
+                    AppearanceOption.DockSize,
+                    AppearanceOption.DockMagnification,
+                    AppearanceOption.DockName,
+                    AppearanceOption.DockShelf,
+                    AppearanceOption.DockShape,
                 ),
             ),
             AppearanceGroup(

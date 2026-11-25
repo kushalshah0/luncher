@@ -405,7 +405,7 @@ class HomeActivityTest {
 
         assertEquals(emptyList<String>(), activity.labels())
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.home_empty).visibility)
-        assertEquals("All apps are hidden. Open Settings → Hide apps to show them again.", activity.emptyText())
+        assertEquals("All apps are hidden. Open Settings → Show apps to show them again.", activity.emptyText())
     }
 
     @Test
@@ -418,7 +418,7 @@ class HomeActivityTest {
         arrangements.arrangement = AppArrangement(order = null, hidden = listOf(app("movies").launchable))  // ...and hidden
         controller.restart().start().resume()
 
-        assertEquals("All apps are hidden. Open Settings → Hide apps to show them again.", controller.get().emptyText())
+        assertEquals("All apps are hidden. Open Settings → Show apps to show them again.", controller.get().emptyText())
     }
 
     @Test

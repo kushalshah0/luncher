@@ -400,7 +400,7 @@ class TileMenuTest {
 
         assertEquals("", activity.labels())
         assertTrue(activity.findViewById<View>(R.id.home_settings).isFocused)
-        assertEquals("All apps are hidden. Open Settings → Hide apps to show them again.", activity.findViewById<TextView>(R.id.home_empty).text.toString())
+        assertEquals("All apps are hidden. Open Settings → Show apps to show them again.", activity.findViewById<TextView>(R.id.home_empty).text.toString())
     }
 
     @Test

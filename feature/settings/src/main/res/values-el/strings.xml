@@ -2,7 +2,7 @@
 <!-- Greek. What each string is for: values/strings.xml. -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="settings_title">Ρυθμίσεις</string>
-    <string name="settings_hide_apps">Απόκρυψη εφαρμογών</string>
+    <string name="settings_hide_apps">Εμφάνιση εφαρμογών</string>
     <string name="settings_hidden">Κρυφή</string>
     <string name="settings_app_renamed">Νέο όνομα: \u2068%1$s\u2069</string>
     <string name="settings_no_apps">Δεν υπάρχουν εγκατεστημένες εφαρμογές TV</string>
@@ -215,4 +215,28 @@
         <item quantity="other"><xliff:g id="count" example="5">%d</xliff:g> εικόνες</item>
     </plurals>
     <string name="settings_pictures_folder_preview_label">Προεπισκόπηση</string>
+    <!-- NETTV fork, the dock. Show apps in the dock's mode: the hint, and the chip on a docked app. -->
+    <string name="settings_show_apps_dock_hint">Το OK προσθέτει μια εφαρμογή στη μπάρα ή την αφαιρεί</string>
+    <string name="settings_in_dock">Στη μπάρα</string>
+    <!-- The appearance editor's groups: the home mode's, and the dock's. -->
+    <string name="settings_appearance_home">Αρχική οθόνη</string>
+    <string name="settings_appearance_dock">Μπάρα</string>
+    <!-- The home mode: the apps as TV tiles, or in a dock of round icons. -->
+    <string name="settings_appearance_home_mode">Λειτουργία</string>
+    <string name="settings_appearance_mode_tiles">Πλακίδια TV</string>
+    <string name="settings_appearance_mode_dock">Μπάρα</string>
+    <!-- The dock's options and their values. -->
+    <string name="settings_appearance_dock_size">Μέγεθος μπάρας</string>
+    <string name="settings_appearance_magnification">Μεγέθυνση</string>
+    <string name="settings_appearance_subtle">Διακριτική</string>
+    <string name="settings_appearance_full">Πλήρης</string>
+    <string name="settings_appearance_dock_name">Όνομα εφαρμογής</string>
+    <string name="settings_appearance_shelf">Ράφι</string>
+    <string name="settings_appearance_glass">Γυαλί</string>
+    <string name="settings_appearance_dark_glass">Σκούρο γυαλί</string>
+    <string name="settings_appearance_none">Κανένα</string>
+    <string name="settings_appearance_shape">Σχήμα</string>
+    <string name="settings_appearance_curved">Καμπύλο</string>
+    <string name="settings_appearance_shape_pill">Κάψουλα</string>
+    <string name="settings_appearance_soft">Απαλό</string>
 </resources>

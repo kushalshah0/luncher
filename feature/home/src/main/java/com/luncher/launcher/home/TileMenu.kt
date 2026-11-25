@@ -95,16 +95,23 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
      * Shows the menu of [tile], with its app's [entries], in their order; OK on an available one
      * gives its action to [act]. The first available one has the focus.
      */
-    fun show(tile: AppTileView, entries: List<AppMenuEntry>, act: (AppAction) -> Unit) {
+    fun show(tile: AppTileView, entries: List<AppMenuEntry>, act: (AppAction) -> Unit) =
+        show(tile.app, tile.focusedBounds(), entries, act)
+
+    /**
+     * Shows the menu of [app], whose image is at [bounds] on the screen (a tile, or a dock icon,
+     * NETTV fork), as [show] for a tile.
+     */
+    fun show(app: HomeApp, bounds: PixelBounds, entries: List<AppMenuEntry>, act: (AppAction) -> Unit) {
         this.entries.removeAllViews()
         for (entry in entries) this.entries.addView(entryView(entry, act))
         roles?.let { checkNotNull(window).stylePanel(it, corner) }   // the new entries too
         scroll.scrollTo(0, 0)   // where the last menu was scrolled to
         // No title shows; the app's name for screen readers, as the menu appears. Not the window's
         // title, which would rename it: Android names a dialog's window after its activity.
-        if (Build.VERSION.SDK_INT >= 28) panel.accessibilityPaneTitle = tile.app.name
-        placeAt(tile)
-        app = tile.app
+        if (Build.VERSION.SDK_INT >= 28) panel.accessibilityPaneTitle = app.name
+        placeAt(bounds)
+        this.app = app
         show()
         WindowFocus.checkAfterShow(this)
         for (i in 0 until this.entries.childCount) if (this.entries.getChildAt(i).requestFocus()) break
@@ -138,7 +145,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
      * Android plays no dialog's entrance, the window's exit only, and the [entrance] in it.
      */
     @SuppressLint("RtlHardcoded")
-    private fun placeAt(tile: AppTileView) {
+    private fun placeAt(bounds: PixelBounds) {
         val window = checkNotNull(window)
         val screen = activity.window.decorView
         val resources = activity.resources
@@ -147,7 +154,6 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         val topBar = activity.findViewById<View>(R.id.home_top_bar)
         topBar.getLocationOnScreen(location)
         val room = PixelBounds(marginX, maxOf(marginY, location[1] + topBar.height), screen.width - marginX, screen.height - marginY)
-        val bounds = tile.focusedBounds()
         val gap = resources.getDimensionPixelSize(R.dimen.home_menu_gap)
         // The panel, not the window's decor, which adds nothing around it: under Robolectric the
         // decor of a dialog shown before measures it shorter, by where its window was last.
@@ -203,6 +209,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         AppAction.Rename -> R.string.home_menu_rename
         AppAction.TileBanner -> R.string.home_menu_tile_banner
         AppAction.Info -> R.string.home_menu_info
+        AppAction.RemoveFromDock -> R.string.home_menu_remove_from_dock
     }
 
     private fun icon(action: AppAction): Int = when (action) {
@@ -211,6 +218,7 @@ internal class TileMenu(private val activity: Activity) : Dialog(activity, R.sty
         AppAction.Rename -> UiR.drawable.icon_pencil
         AppAction.TileBanner -> UiR.drawable.icon_image
         AppAction.Info -> UiR.drawable.icon_info
+        AppAction.RemoveFromDock -> UiR.drawable.icon_trash
     }
 
     private val location = IntArray(2)

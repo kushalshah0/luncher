@@ -7,6 +7,10 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceOption
 import com.luncher.domain.appearance.AppearanceTopic
 import com.luncher.domain.appearance.Corners
+import com.luncher.domain.appearance.DockMagnification
+import com.luncher.domain.appearance.DockShape
+import com.luncher.domain.appearance.DockShelf
+import com.luncher.domain.appearance.HomeMode
 import com.luncher.domain.appearance.HorizontalAlignment
 import com.luncher.domain.appearance.Side
 import com.luncher.domain.appearance.ThemeMode
@@ -44,6 +48,8 @@ internal interface OptionLabels<M, O> {
 }
 
 internal fun topicTitle(topic: AppearanceTopic): Int = when (topic) {
+    AppearanceTopic.HOME -> R.string.settings_appearance_home
+    AppearanceTopic.DOCK -> R.string.settings_appearance_dock
     AppearanceTopic.TILES -> R.string.settings_appearance_tiles
     AppearanceTopic.TOP_BAR -> R.string.settings_appearance_top_bar
     AppearanceTopic.THEME -> R.string.settings_appearance_theme
@@ -52,6 +58,8 @@ internal fun topicTitle(topic: AppearanceTopic): Int = when (topic) {
 
 /** The icon before a group's name. */
 internal fun topicIcon(topic: AppearanceTopic): Int = when (topic) {
+    AppearanceTopic.HOME -> UiR.drawable.icon_tv
+    AppearanceTopic.DOCK -> R.drawable.settings_icon_dock
     AppearanceTopic.TILES -> UiR.drawable.icon_grid
     AppearanceTopic.TOP_BAR -> UiR.drawable.icon_clock
     AppearanceTopic.THEME -> UiR.drawable.icon_palette
@@ -62,6 +70,12 @@ internal fun topicIcon(topic: AppearanceTopic): Int = when (topic) {
 internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>> {
 
     override fun label(option: AppearanceOption<*>): Int = when (option) {
+        AppearanceOption.HomeMode -> R.string.settings_appearance_home_mode
+        AppearanceOption.DockSize -> R.string.settings_appearance_dock_size
+        AppearanceOption.DockMagnification -> R.string.settings_appearance_magnification
+        AppearanceOption.DockName -> R.string.settings_appearance_dock_name
+        AppearanceOption.DockShelf -> R.string.settings_appearance_shelf
+        AppearanceOption.DockShape -> R.string.settings_appearance_shape
         AppearanceOption.VerticalAlignment -> R.string.settings_appearance_vertical_alignment
         AppearanceOption.HorizontalAlignment -> R.string.settings_appearance_horizontal_alignment
         AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
@@ -87,6 +101,12 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
     }
 
     override fun value(option: AppearanceOption<*>, model: Appearance, context: Context): String = when (option) {
+        AppearanceOption.HomeMode -> context.getString(homeMode(AppearanceOption.HomeMode.get(model)))
+        AppearanceOption.DockSize -> context.getString(R.string.settings_appearance_radius_dp, AppearanceOption.DockSize.get(model))
+        AppearanceOption.DockMagnification -> context.getString(magnification(AppearanceOption.DockMagnification.get(model)))
+        AppearanceOption.DockName -> context.getString(shown(AppearanceOption.DockName.get(model)))
+        AppearanceOption.DockShelf -> context.getString(shelf(AppearanceOption.DockShelf.get(model)))
+        AppearanceOption.DockShape -> context.getString(dockShape(AppearanceOption.DockShape.get(model)))
         AppearanceOption.VerticalAlignment -> context.getString(vertical(AppearanceOption.VerticalAlignment.get(model)))
         AppearanceOption.HorizontalAlignment -> context.getString(horizontal(AppearanceOption.HorizontalAlignment.get(model)))
         AppearanceOption.FullBottomRow -> context.getString(onOff(AppearanceOption.FullBottomRow.get(model)))
@@ -137,6 +157,29 @@ internal object TileImageLabels : OptionLabels<TileImage, TileImageOption<*>> {
         TileImageOption.Backdrop -> context.getString(backdrop(TileImageOption.Backdrop.get(model)))
         TileImageOption.Focus -> context.getString(focusShape(TileImageOption.Focus.get(model)))
     }
+}
+
+private fun homeMode(mode: HomeMode): Int = when (mode) {
+    HomeMode.TILES -> R.string.settings_appearance_mode_tiles
+    HomeMode.DOCK -> R.string.settings_appearance_mode_dock
+}
+
+private fun magnification(magnification: DockMagnification): Int = when (magnification) {
+    DockMagnification.OFF -> R.string.settings_appearance_off
+    DockMagnification.SUBTLE -> R.string.settings_appearance_subtle
+    DockMagnification.FULL -> R.string.settings_appearance_full
+}
+
+private fun shelf(shelf: DockShelf): Int = when (shelf) {
+    DockShelf.GLASS -> R.string.settings_appearance_glass
+    DockShelf.DARK -> R.string.settings_appearance_dark_glass
+    DockShelf.NONE -> R.string.settings_appearance_none
+}
+
+private fun dockShape(shape: DockShape): Int = when (shape) {
+    DockShape.CURVED -> R.string.settings_appearance_curved
+    DockShape.PILL -> R.string.settings_appearance_shape_pill
+    DockShape.SOFT -> R.string.settings_appearance_soft
 }
 
 private fun backdrop(backdrop: TileBackdrop): Int = when (backdrop) {

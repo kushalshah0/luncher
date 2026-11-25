@@ -10,6 +10,10 @@ import com.luncher.domain.pictures.offeredPositions
 import com.luncher.domain.pictures.positionApplies
 import com.luncher.domain.appearance.AccentColor as Accent
 import com.luncher.domain.appearance.AppName as Name
+import com.luncher.domain.appearance.DockMagnification as Magnification
+import com.luncher.domain.appearance.DockShape as Shape
+import com.luncher.domain.appearance.DockShelf as Shelf
+import com.luncher.domain.appearance.HomeMode as Home
 import com.luncher.domain.appearance.HorizontalAlignment as Horizontal
 import com.luncher.domain.appearance.ThemeMode as Mode
 import com.luncher.domain.appearance.VerticalAlignment as Vertical
@@ -33,12 +37,61 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
      */
     val showsOnHome: Boolean get() = true
 
+    /** Whether the home screen shows the apps as TV tiles or in a dock (NETTV fork). */
+    data object HomeMode : AppearanceOption<Home> {
+        override val values: List<Home> = Home.entries
+        override fun get(model: Appearance) = model.homeMode
+        override fun set(model: Appearance, value: Home) = model.copy(homeMode = value)
+    }
+
+    /** How big the dock's icons are at rest, their diameter in dp (NETTV fork). */
+    data object DockSize : AppearanceOption<Int> {
+        override val values: List<Int> = listOf(48, 56, 64, 76, 88)
+        override fun get(model: Appearance) = model.dock.iconSizeDp
+        override fun set(model: Appearance, value: Int) = model.copy(dock = model.dock.copy(iconSizeDp = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.DOCK
+    }
+
+    /** How much the dock's focused icon grows (NETTV fork). */
+    data object DockMagnification : AppearanceOption<Magnification> {
+        override val values: List<Magnification> = Magnification.entries
+        override fun get(model: Appearance) = model.dock.magnification
+        override fun set(model: Appearance, value: Magnification) = model.copy(dock = model.dock.copy(magnification = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.DOCK
+    }
+
+    /** Whether the dock's focused app shows its name above it (NETTV fork). */
+    data object DockName : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(model: Appearance) = model.dock.showName
+        override fun set(model: Appearance, value: Boolean) = model.copy(dock = model.dock.copy(showName = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.DOCK
+    }
+
+    /** What the dock's shelf is drawn as (NETTV fork). */
+    data object DockShelf : AppearanceOption<Shelf> {
+        override val values: List<Shelf> = Shelf.entries
+        override fun get(model: Appearance) = model.dock.shelf
+        override fun set(model: Appearance, value: Shelf) = model.copy(dock = model.dock.copy(shelf = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.DOCK
+    }
+
+    /** How round the dock shelf's ends are, while there's a shelf (NETTV fork). */
+    data object DockShape : AppearanceOption<Shape> {
+        override val values: List<Shape> = Shape.entries
+        override fun get(model: Appearance) = model.dock.shape
+        override fun set(model: Appearance, value: Shape) = model.copy(dock = model.dock.copy(shape = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) =
+            model.homeMode == Home.DOCK && model.dock.shelf != Shelf.NONE
+    }
+
     /** Where the rows of tiles go in the height. */
     data object VerticalAlignment : AppearanceOption<Vertical> {
         override val values: List<Vertical> = Vertical.entries
         override fun get(model: Appearance) = model.tileGeometry.verticalAlignment
         override fun set(model: Appearance, value: Vertical) =
             model.copy(tileGeometry = model.tileGeometry.copy(verticalAlignment = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.TILES
     }
 
     /** Where a row of tiles that isn't full goes in the width. */
@@ -47,6 +100,7 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun get(model: Appearance) = model.tileGeometry.horizontalAlignment
         override fun set(model: Appearance, value: Horizontal) =
             model.copy(tileGeometry = model.tileGeometry.copy(horizontalAlignment = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.TILES
     }
 
     /** With the rows centered or at the bottom, whether the bottom row is always full. */
@@ -55,7 +109,8 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun get(model: Appearance) = model.tileGeometry.fullBottomRow
         override fun set(model: Appearance, value: Boolean) =
             model.copy(tileGeometry = model.tileGeometry.copy(fullBottomRow = value))
-        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.tileGeometry.verticalAlignment != Vertical.TOP
+        override fun appliesTo(model: Appearance, context: AppearanceContext) =
+            model.homeMode == Home.TILES && model.tileGeometry.verticalAlignment != Vertical.TOP
     }
 
     /** About how wide a tile is, in dp (NETTV fork): smaller fits more apps in a row. */
@@ -64,6 +119,7 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun get(model: Appearance) = model.tileGeometry.tileWidthDp
         override fun set(model: Appearance, value: Int) =
             model.copy(tileGeometry = model.tileGeometry.copy(tileWidthDp = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.TILES
     }
 
     /** How round the tiles' corners are: radii in dp, then round ends. */
@@ -72,6 +128,7 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun get(model: Appearance) = model.tileStyle.corners
         override fun set(model: Appearance, value: Corners) =
             model.copy(tileStyle = model.tileStyle.copy(corners = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.TILES
     }
 
     /** Whether the focused tile is framed; without a frame, it's lifted with a shadow. */
@@ -80,6 +137,7 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun get(model: Appearance) = model.tileStyle.focusFrame
         override fun set(model: Appearance, value: Boolean) =
             model.copy(tileStyle = model.tileStyle.copy(focusFrame = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.TILES
     }
 
     /** Whether the app names show below the tiles: never, the focused one's, or every one. */
@@ -88,6 +146,7 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun get(model: Appearance) = model.tileGeometry.appName
         override fun set(model: Appearance, value: Name) =
             model.copy(tileGeometry = model.tileGeometry.copy(appName = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.TILES
     }
 
     /** Whether the top bar shows the time. */

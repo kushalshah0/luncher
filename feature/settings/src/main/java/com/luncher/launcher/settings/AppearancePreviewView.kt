@@ -16,10 +16,13 @@ import android.view.ViewOutlineProvider
 import com.luncher.domain.appearance.AppName
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.Background
+import com.luncher.domain.appearance.DockShelf
+import com.luncher.domain.appearance.HomeMode
 import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.jobs.JobPriority
 import com.luncher.domain.jobs.Jobs
 import com.luncher.domain.jobs.LatestRequest
+import com.luncher.domain.layout.DockLayout
 import com.luncher.domain.layout.TileLayouts
 import com.luncher.domain.layout.TopBarItem
 import com.luncher.domain.layout.topBarLayout
@@ -32,6 +35,7 @@ import com.luncher.launcher.ui.TileName
 import com.luncher.launcher.ui.WallpaperOutline
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
+import com.luncher.launcher.ui.shelfOutline
 import com.luncher.launcher.ui.R as UiR
 import kotlin.math.roundToInt
 
@@ -86,6 +90,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             // The radius depends on the tiles' height too, at most half of it.
             if (value.tileStyle != old.tileStyle || value.tileGeometry != old.tileGeometry) styleTiles()
             if (value.topBar != old.topBar) placeBar()
+            if (value.homeMode != old.homeMode || value.dock != old.dock) placeDock()
             if (value.background != old.background) loadWallpaper()
             // The accent's, as the home screen frames its focused tile; the mode isn't the home screen's.
             if (value.theme.accent != old.theme.accent) focusPaint.color = colorRoles(value.theme).homeAccent
@@ -195,6 +200,20 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
 
     /** The app names' blocks, below the tiles: the focused one's, or every one's, as the appearance shows names; empty where none shows. */
     private val names = Array(TILES) { RectF() }
+
+    // NETTV fork: the dock, in the tiles' place in its mode: round icons on its shelf, the middle
+    // one focused and magnified, its name's block above it.
+    private val dockIcons = Array(DOCK_ICONS) { RectF() }
+    private val dockCenters = FloatArray(DOCK_ICONS)
+    private val dockScales = FloatArray(DOCK_ICONS)
+    private val dockShelf = Path()
+    private val dockShelfBounds = RectF()
+    private val dockName = RectF()
+    private val dockShelfPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val dockRimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        color = Color.argb(150, 255, 255, 255)
+    }
     private val time = RectF()
     private val date = RectF()
     private val gear = RectF()
@@ -261,6 +280,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         placeTiles()
         styleTiles()
         placeBar()
+        placeDock()
         loadWallpaper()
     }
 
@@ -281,6 +301,7 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
             canvas.drawOval(gear, blockOutlinePaint)
             canvas.drawOval(gear, primaryPaint)
         }
+        if (appearance.homeMode == HomeMode.DOCK) return drawDock(canvas)
         for (i in tiles.indices) {
             if (i == FOCUSED) continue
             drawTile(canvas, tiles[i])
@@ -299,6 +320,53 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         }
         drawBlock(canvas, names[FOCUSED], primaryPaint)
         canvas.restore()
+    }
+
+    /** The dock: its shelf (as the appearance draws it, or none), its icons, the focused one's name. */
+    private fun drawDock(canvas: Canvas) {
+        if (appearance.dock.shelf != DockShelf.NONE) {
+            canvas.drawPath(dockShelf, dockShelfPaint)
+            canvas.drawPath(dockShelf, dockRimPaint)
+        }
+        for (i in dockIcons.indices) {
+            val icon = dockIcons[i]
+            canvas.drawOval(icon, tileOutlinePaint)
+            canvas.drawOval(icon, if (i == DOCK_FOCUSED) primaryPaint else tileFillPaint)
+            canvas.drawOval(icon, tilePaint)
+        }
+        drawBlock(canvas, dockName, primaryPaint)
+    }
+
+    /** The dock's shelf, icons and name's block, laid out by the home screen's rules ([DockLayout]) at the sample's scale. */
+    private fun placeDock() {
+        if (scale == 0f) return
+        val dock = appearance.dock
+        val icon = dock.iconSizeDp * scale
+        val layout = DockLayout(DOCK_ICONS, icon, icon * DOCK_GAP, icon * DOCK_PADDING, dock.magnification.scale)
+        val width = layout.place(DOCK_FOCUSED.toFloat(), dockCenters, dockScales)
+        val left = screen.left + (SCREEN_WIDTH * scale - width) / 2
+        val bottom = screen.bottom - PADDING_BOTTOM * scale
+        dockShelfBounds.set(left, bottom - layout.shelfHeight, left + width, bottom)
+        shelfOutline(dockShelf, dockShelfBounds, dock.shape)
+        dockShelfPaint.color = when (dock.shelf) {
+            DockShelf.GLASS -> Color.argb(90, 255, 255, 255)
+            DockShelf.DARK -> Color.argb(170, 18, 18, 20)
+            DockShelf.NONE -> Color.TRANSPARENT
+        }
+        dockRimPaint.strokeWidth = maxOf(1f, scale)
+        val iconBottom = bottom - layout.paddingPx
+        for (i in dockIcons.indices) {
+            val size = icon * dockScales[i]
+            val center = left + dockCenters[i]
+            dockIcons[i].set(center - size / 2, iconBottom - size, center + size / 2, iconBottom)
+        }
+        val focused = dockIcons[DOCK_FOCUSED]
+        if (dock.showName) {
+            val nameBottom = focused.top - DOCK_NAME_GAP * scale
+            dockName.set(focused.centerX() - NAME_WIDTH * scale / 2, nameBottom - NAME_HEIGHT * scale, focused.centerX() + NAME_WIDTH * scale / 2, nameBottom)
+        } else {
+            dockName.setEmpty()
+        }
     }
 
     /** A tile as every one but a framed focused tile is drawn: filled, with its outline, and the edge over a picture. */
@@ -435,6 +503,12 @@ internal class AppearancePreviewView(context: Context, attrs: AttributeSet?) : V
         }
 
         const val SCREEN_WIDTH = 960
+        /** The dock's sample: seven icons, the middle one focused; gap, padding and the name's gap as the home screen's. */
+        const val DOCK_ICONS = 7
+        const val DOCK_FOCUSED = 3
+        const val DOCK_GAP = 0.2f
+        const val DOCK_PADDING = 0.16f
+        const val DOCK_NAME_GAP = 10
         const val PADDING_TOP = 32
         const val PADDING_BOTTOM = 32
         /** The settings entry's size, which the bar's height is. */

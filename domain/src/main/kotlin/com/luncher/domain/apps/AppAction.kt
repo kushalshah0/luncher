@@ -21,6 +21,9 @@ sealed interface AppAction {
 
     /** Opens the app's page in the device's settings ([AppInfoScreen]). */
     data object Info : AppAction
+
+    /** Takes the app out of the dock (NETTV fork); Show apps in the settings puts it back. */
+    data object RemoveFromDock : AppAction
 }
 
 /**
@@ -43,6 +46,21 @@ fun appActions(arranged: ArrangedApps, app: HomeApp, hasAppInfo: Boolean): List<
         AppMenuEntry(AppAction.Hide),
         AppMenuEntry(AppAction.Rename),
         AppMenuEntry(AppAction.TileBanner),
+        AppMenuEntry(AppAction.Info, available = hasAppInfo),
+    )
+}
+
+/**
+ * The entries of the menu of [app], one of [arranged]'s docked apps, while the home screen shows
+ * the dock (NETTV fork): Move (with another docked app to move past), Remove from dock, Rename,
+ * App info. No tile banner: the dock shows icons.
+ */
+fun dockActions(arranged: ArrangedApps, app: HomeApp, hasAppInfo: Boolean): List<AppMenuEntry> {
+    require(arranged.docked.any { it.launchable == app.launchable }) { "not docked: ${app.launchable}" }
+    return listOfNotNull(
+        AppMenuEntry(AppAction.Move).takeIf { arranged.docked.size > 1 },
+        AppMenuEntry(AppAction.RemoveFromDock),
+        AppMenuEntry(AppAction.Rename),
         AppMenuEntry(AppAction.Info, available = hasAppInfo),
     )
 }

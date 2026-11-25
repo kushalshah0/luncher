@@ -45,7 +45,9 @@ fun homeApps(
             order.mapNotNull { byId[it] } + unordered.filter { it.launchable !in orderIds }.sortedWith(byName)
         }
     }
-    return ArrangedApps(shown, hidden, stored, customized, byName, byLabel)
+    // The dock (NETTV fork): the stored one's installed apps, in its order; or, never changed, the first shown apps.
+    val docked = stored.docked?.mapNotNull { byId[it] } ?: shown.take(AppArrangement.DEFAULT_DOCK_SIZE)
+    return ArrangedApps(shown, hidden, docked, stored, customized, byName, byLabel)
 }
 
 /**
@@ -53,11 +55,12 @@ fun homeApps(
  * once; one that is both hidden and in the order is hidden.
  */
 private fun matched(arrangement: AppArrangement, installed: Set<LaunchableApp>): AppArrangement {
-    val match = StoredMatch(arrangement.order.orEmpty() + arrangement.hidden, installed)
+    val match = StoredMatch(arrangement.order.orEmpty() + arrangement.hidden + arrangement.docked.orEmpty(), installed)
     val hidden = arrangement.hidden.mapNotNull(match::match).distinct()
     val hiddenIds = hidden.toSet()
     val order = arrangement.order?.mapNotNull(match::match)?.distinct()?.filter { it !in hiddenIds }
-    return AppArrangement(order, hidden)
+    val docked = arrangement.docked?.mapNotNull(match::match)?.distinct()
+    return AppArrangement(order, hidden, docked)
 }
 
 /** [customizations] with their apps matched to the [installed] apps ([StoredMatch]). */

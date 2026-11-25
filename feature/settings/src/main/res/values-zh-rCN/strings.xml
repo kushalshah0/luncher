@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="settings_title">设置</string>
-    <string name="settings_hide_apps">隐藏应用</string>
+    <string name="settings_hide_apps">显示应用</string>
     <string name="settings_hidden">已隐藏</string>
     <string name="settings_app_renamed">已重命名为 \u2068%1$s\u2069</string>
     <string name="settings_no_apps">未安装电视应用</string>
@@ -195,4 +195,28 @@
         <item quantity="other"><xliff:g id="count" example="5">%d</xliff:g> 张图片</item>
     </plurals>
     <string name="settings_pictures_folder_preview_label">预览</string>
+    <!-- NETTV fork, the dock. Show apps in the dock's mode: the hint, and the chip on a docked app. -->
+    <string name="settings_show_apps_dock_hint">按 OK 将应用加入程序坞或从中移除</string>
+    <string name="settings_in_dock">在程序坞中</string>
+    <!-- The appearance editor's groups: the home mode's, and the dock's. -->
+    <string name="settings_appearance_home">主屏幕</string>
+    <string name="settings_appearance_dock">程序坞</string>
+    <!-- The home mode: the apps as TV tiles, or in a dock of round icons. -->
+    <string name="settings_appearance_home_mode">模式</string>
+    <string name="settings_appearance_mode_tiles">电视卡片</string>
+    <string name="settings_appearance_mode_dock">程序坞</string>
+    <!-- The dock's options and their values. -->
+    <string name="settings_appearance_dock_size">程序坞大小</string>
+    <string name="settings_appearance_magnification">放大</string>
+    <string name="settings_appearance_subtle">轻微</string>
+    <string name="settings_appearance_full">完全</string>
+    <string name="settings_appearance_dock_name">应用名称</string>
+    <string name="settings_appearance_shelf">底座</string>
+    <string name="settings_appearance_glass">玻璃</string>
+    <string name="settings_appearance_dark_glass">深色玻璃</string>
+    <string name="settings_appearance_none">无</string>
+    <string name="settings_appearance_shape">形状</string>
+    <string name="settings_appearance_curved">曲线</string>
+    <string name="settings_appearance_shape_pill">胶囊</string>
+    <string name="settings_appearance_soft">柔和</string>
 </resources>

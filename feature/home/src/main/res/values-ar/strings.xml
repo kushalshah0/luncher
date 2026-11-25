@@ -26,4 +26,10 @@
     <string name="home_tile_images_screen_changed">جارٍ ملاءمة لافتات المربعات لهذه الشاشة…</string>
     <string name="home_tile_images_outdated">جارٍ تحديث لافتات المربعات…</string>
     <string name="home_tile_images_saving">جارٍ معالجة لافتة المربع…</string>
+    <!-- NETTV fork, the dock: its icon menu's entry that takes the app out of the dock. -->
+    <string name="home_menu_remove_from_dock">إزالة من الشريط</string>
+    <!-- NETTV fork: shown when the dock holds no apps. The settings panel's title and its Show apps entry. -->
+    <string name="home_dock_empty">الشريط فارغ. افتح <xliff:g id="settings" example="Settings">%1$s</xliff:g> ← <xliff:g id="show_apps" example="Show apps">%2$s</xliff:g> لإضافة تطبيقات.</string>
+    <!-- NETTV fork: above the dock's icon while it's being moved. -->
+    <string name="home_dock_move_hint">⁦◀ ▶⁩ نقل · OK إفلات</string>
 </resources>

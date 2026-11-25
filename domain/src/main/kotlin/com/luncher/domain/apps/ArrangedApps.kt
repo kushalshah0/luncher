@@ -12,6 +12,8 @@ import com.luncher.domain.pictures.PictureId
 class ArrangedApps internal constructor(
     val shown: List<HomeApp>,
     val hidden: List<HomeApp>,
+    /** The apps in the dock, in its order (NETTV fork): shown or hidden, the dock is a list of its own. */
+    val docked: List<HomeApp>,
     /** The stored arrangement matched to the installed apps; it keeps the entries of apps not installed now. */
     private val stored: AppArrangement,
     /**
@@ -32,7 +34,7 @@ class ArrangedApps internal constructor(
      */
     fun hide(app: HomeApp): ArrangedApps {
         require(app in shown) { "not shown: ${app.launchable}" }
-        return ArrangedApps(shown - app, listOf(app) + hidden, stored, customizations, byName, byLabel)
+        return ArrangedApps(shown - app, listOf(app) + hidden, docked, stored, customizations, byName, byLabel)
     }
 
     /**
@@ -42,7 +44,7 @@ class ArrangedApps internal constructor(
     fun show(app: HomeApp): ArrangedApps {
         require(app in hidden) { "not hidden: ${app.launchable}" }
         val shown = if (stored.order == null) (shown + app).sortedWith(byName) else shown + app
-        return ArrangedApps(shown, hidden - app, stored, customizations, byName, byLabel)
+        return ArrangedApps(shown, hidden - app, docked, stored, customizations, byName, byLabel)
     }
 
     /**
@@ -51,16 +53,44 @@ class ArrangedApps internal constructor(
      */
     internal fun rearranged(shown: List<HomeApp>, hidden: List<HomeApp>): ArrangedApps {
         require(shown.size + hidden.size == this.shown.size + this.hidden.size) { "not the same apps" }
-        return ArrangedApps(shown, hidden, stored.copy(order = stored.order ?: emptyList()), customizations, byName, byLabel)
+        return ArrangedApps(shown, hidden, docked, stored.copy(order = stored.order ?: emptyList()), customizations, byName, byLabel)
     }
 
+    /** [app] put in the dock, last (NETTV fork). */
+    fun dock(app: HomeApp): ArrangedApps {
+        require(app in shown || app in hidden) { "not installed: ${app.launchable}" }
+        if (docked.any { it.launchable == app.launchable }) return this
+        return withDock(docked + app)
+    }
+
+    /** [app] taken out of the dock (NETTV fork); the other docked apps keep their order. */
+    fun undock(app: HomeApp): ArrangedApps = withDock(docked.filter { it.launchable != app.launchable })
+
+    /** The docked [app] moved to [index] in the dock (NETTV fork), within its ends. */
+    fun dockMoved(app: HomeApp, index: Int): ArrangedApps {
+        val from = docked.indexOfFirst { it.launchable == app.launchable }
+        require(from >= 0) { "not docked: ${app.launchable}" }
+        val apps = docked.toMutableList()
+        val moved = apps.removeAt(from)
+        apps.add(index.coerceIn(0, apps.size), moved)
+        return withDock(apps)
+    }
+
+    /** These apps in the dock, in this order: from then on the stored dock, not the default one. */
+    private fun withDock(apps: List<HomeApp>): ArrangedApps =
+        ArrangedApps(shown, hidden, apps, stored.copy(docked = stored.docked ?: emptyList()), customizations, byName, byLabel)
+
     /**
-     * All apps by the device's label, each with whether it's hidden: the list where the user hides
-     * and shows them, which names each app by its real name.
+     * All apps by the device's label, each with whether it's hidden and whether it's in the dock:
+     * the list where the user shows apps (on the tiles, or in the dock), which names each app by
+     * its real name.
      */
-    fun byLabel(): List<AppVisibility> =
-        (shown.map { AppVisibility(it, hidden = false) } + hidden.map { AppVisibility(it, hidden = true) })
+    fun byLabel(): List<AppVisibility> {
+        val dockedIds = docked.mapTo(HashSet()) { it.launchable }
+        return (shown.map { AppVisibility(it, hidden = false) } + hidden.map { AppVisibility(it, hidden = true) })
+            .map { if (it.app.launchable in dockedIds) it.copy(docked = true) else it }
             .sortedWith(compareBy(byLabel) { it.app })
+    }
 
     /**
      * What the tiles showing a picture of the library are drawn from, tiles of [size]: the shown
@@ -122,12 +152,13 @@ class ArrangedApps internal constructor(
             return AppArrangement(
                 order = stored.order?.let { keepAbsent(shown.map { app -> app.launchable }, it, installed) },
                 hidden = keepAbsent(hidden.map { it.launchable }, stored.hidden, installed),
+                docked = stored.docked?.let { keepAbsent(docked.map { app -> app.launchable }, it, installed) },
             )
         }
 }
 
-/** An app in the list where the user hides and shows apps. */
-data class AppVisibility(val app: HomeApp, val hidden: Boolean)
+/** An app in the list where the user shows and hides apps: whether it's hidden from the tiles, and whether it's in the dock. */
+data class AppVisibility(val app: HomeApp, val hidden: Boolean, val docked: Boolean = false)
 
 /**
  * [current] with the entries of [previous] that aren't [installed] put back: each after the

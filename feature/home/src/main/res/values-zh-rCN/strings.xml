@@ -24,4 +24,10 @@
     <string name="home_tile_images_screen_changed">正在调整卡片封面尺寸…</string>
     <string name="home_tile_images_outdated">正在更新卡片封面…</string>
     <string name="home_tile_images_saving">正在处理卡片封面…</string>
+    <!-- NETTV fork, the dock: its icon menu's entry that takes the app out of the dock. -->
+    <string name="home_menu_remove_from_dock">从程序坞移除</string>
+    <!-- NETTV fork: shown when the dock holds no apps. The settings panel's title and its Show apps entry. -->
+    <string name="home_dock_empty">程序坞是空的。打开<xliff:g id="settings" example="Settings">%1$s</xliff:g> → <xliff:g id="show_apps" example="Show apps">%2$s</xliff:g>添加应用。</string>
+    <!-- NETTV fork: above the dock's icon while it's being moved. -->
+    <string name="home_dock_move_hint">◀ ▶ 移动 · OK 放下</string>
 </resources>

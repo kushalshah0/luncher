@@ -52,7 +52,7 @@ class SettingsActivityTest {
 
     @Test
     fun `lists hiding apps, the appearance and the pictures, then the system settings`() {
-        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings", "Restart"), start().titles().map { it.text.toString() })
+        assertEquals(listOf("Show apps", "Appearance", "TV settings", "Android settings", "Restart"), start().titles().map { it.text.toString() })
     }
 
     @Test
@@ -77,7 +77,7 @@ class SettingsActivityTest {
         controller.configurationChange().visible()   // Robolectric shows the new window only when told
 
         val activity = controller.get()
-        assertEquals(listOf("Hide apps", "Appearance", "TV settings", "Android settings", "Restart"), activity.titles().map { it.text.toString() })
+        assertEquals(listOf("Show apps", "Appearance", "TV settings", "Android settings", "Restart"), activity.titles().map { it.text.toString() })
         assertTrue(activity.entries().first().isFocused)
     }
 
@@ -259,7 +259,7 @@ class SettingsActivityTest {
         val titles = start().titles()
         val entry = titles.first().layout
 
-        assertEquals("Hide apps", titles.first().text.toString())
+        assertEquals("Show apps", titles.first().text.toString())
         assertEquals(entry.width.toFloat(), entry.getLineRight(0))
     }
 

@@ -2,7 +2,7 @@
 <!-- Arabic. What each string is for: values/strings.xml. -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="settings_title">الإعدادات</string>
-    <string name="settings_hide_apps">إخفاء التطبيقات</string>
+    <string name="settings_hide_apps">إظهار التطبيقات</string>
     <string name="settings_hidden">مخفي</string>
     <string name="settings_app_renamed">الاسم الجديد: \u2068%1$s\u2069</string>
     <string name="settings_no_apps">لا توجد تطبيقات تلفزيون مثبّتة</string>
@@ -283,4 +283,28 @@
         <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> صورة</item>
     </plurals>
     <string name="settings_pictures_folder_preview_label">معاينة</string>
+    <!-- NETTV fork, the dock. Show apps in the dock's mode: the hint, and the chip on a docked app. -->
+    <string name="settings_show_apps_dock_hint">يضيف OK تطبيقًا إلى الشريط أو يزيله منه</string>
+    <string name="settings_in_dock">في الشريط</string>
+    <!-- The appearance editor's groups: the home mode's, and the dock's. -->
+    <string name="settings_appearance_home">الشاشة الرئيسية</string>
+    <string name="settings_appearance_dock">الشريط</string>
+    <!-- The home mode: the apps as TV tiles, or in a dock of round icons. -->
+    <string name="settings_appearance_home_mode">الوضع</string>
+    <string name="settings_appearance_mode_tiles">مربعات التلفاز</string>
+    <string name="settings_appearance_mode_dock">الشريط</string>
+    <!-- The dock's options and their values. -->
+    <string name="settings_appearance_dock_size">حجم الشريط</string>
+    <string name="settings_appearance_magnification">التكبير</string>
+    <string name="settings_appearance_subtle">خفيف</string>
+    <string name="settings_appearance_full">كامل</string>
+    <string name="settings_appearance_dock_name">اسم التطبيق</string>
+    <string name="settings_appearance_shelf">الرف</string>
+    <string name="settings_appearance_glass">زجاج</string>
+    <string name="settings_appearance_dark_glass">زجاج داكن</string>
+    <string name="settings_appearance_none">بدون</string>
+    <string name="settings_appearance_shape">الشكل</string>
+    <string name="settings_appearance_curved">منحنٍ</string>
+    <string name="settings_appearance_shape_pill">كبسولة</string>
+    <string name="settings_appearance_soft">ناعم</string>
 </resources>

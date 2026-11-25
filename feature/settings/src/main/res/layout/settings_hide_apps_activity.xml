@@ -23,6 +23,7 @@
         android:textSize="@dimen/text_title" />
 
     <com.luncher.launcher.ui.ThemedText xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/settings_hide_apps_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/settings_zoom_room_horizontal"

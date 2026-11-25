@@ -145,6 +145,16 @@
             android:paddingBottom="@dimen/home_padding_vertical" />
     </LinearLayout>
 
+    <!-- NETTV fork: the dock, in the tiles' place while the home mode is the dock (DockView): at
+         the bottom, the shelf in the middle. Gone in the tiles' mode, where it holds nothing. -->
+    <com.luncher.launcher.home.DockView
+        android:id="@+id/home_dock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layoutDirection="ltr"
+        android:visibility="gone" />
+
     <com.luncher.launcher.home.OutlinedTextView
         android:id="@+id/home_empty"
         android:layout_width="wrap_content"

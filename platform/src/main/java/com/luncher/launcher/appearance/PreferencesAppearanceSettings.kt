@@ -72,6 +72,12 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
 
     /** Where each option is kept. A key, once released, is never given to another option. */
     private fun key(option: AppearanceOption<*>): String = when (option) {
+        AppearanceOption.HomeMode -> "nettv_home_mode"
+        AppearanceOption.DockSize -> "nettv_dock_size"
+        AppearanceOption.DockMagnification -> "nettv_dock_magnification"
+        AppearanceOption.DockName -> "nettv_dock_name"
+        AppearanceOption.DockShelf -> "nettv_dock_shelf"
+        AppearanceOption.DockShape -> "nettv_dock_shape"
         AppearanceOption.VerticalAlignment -> "tile_vertical_alignment"
         AppearanceOption.HorizontalAlignment -> "tile_horizontal_alignment"
         AppearanceOption.FullBottomRow -> "tile_full_bottom_row"

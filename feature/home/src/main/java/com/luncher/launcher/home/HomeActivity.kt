@@ -16,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.appearance.Appearance
+import com.luncher.domain.appearance.HomeMode
 import com.luncher.domain.appearance.ThemeAppearance
 import com.luncher.domain.appearance.colorRoles
 import com.luncher.domain.apps.AppAction
@@ -24,6 +25,7 @@ import com.luncher.domain.apps.HomeApp
 import com.luncher.domain.apps.MAX_APP_NAME
 import com.luncher.domain.apps.appActions
 import com.luncher.domain.apps.appName
+import com.luncher.domain.apps.dockActions
 import com.luncher.domain.apps.homeApps
 import com.luncher.launcher.settings.R as SettingsR
 import com.luncher.launcher.settings.SettingsActivity
@@ -59,6 +61,10 @@ class HomeActivity : Activity() {
     private val appearanceSettings by lazy { graph.appearanceSettings }
     private lateinit var topBar: TopBarView
     private lateinit var tiles: AppTilesView
+    private lateinit var dock: DockView
+
+    /** Tiles or the dock, as the appearance last said (NETTV fork). */
+    private var mode = HomeMode.TILES
     private lateinit var clockView: ClockView
     private lateinit var settingsEntry: View
     private lateinit var statusView: View
@@ -131,6 +137,10 @@ class HomeActivity : Activity() {
         animations = window.attributes.windowAnimations   // the theme's, once the window has its content
         topBar = findViewById(R.id.home_top_bar)
         tiles = findViewById(R.id.home_apps)
+        dock = findViewById(R.id.home_dock)
+        dock.onOpen = ::open
+        dock.onMenu = ::openDockMenu
+        dock.onMoved = { app, index -> arranged?.let { arrangements.save(it.dockMoved(app, index).arrangement) } }
         empty = findViewById(R.id.home_empty)
         clockView = findViewById(R.id.home_clock)
         settingsEntry = findViewById(R.id.home_settings)
@@ -145,7 +155,10 @@ class HomeActivity : Activity() {
         status.usb.setOnClickListener { status.openStorage() }
         bluetoothMenu = BluetoothMenu(this)
         status.bluetooth.setOnClickListener { bluetoothMenu.show(status.bluetooth) }
-        wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) { tiles.frost = it }
+        wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) {
+            tiles.frost = it
+            dock.frost = it
+        }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
             tiles,
@@ -161,7 +174,7 @@ class HomeActivity : Activity() {
         // onBackPressed below does.
         if (Build.VERSION.SDK_INT >= 36) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
-                move.back()
+                back()
             }
         }
     }
@@ -201,6 +214,7 @@ class HomeActivity : Activity() {
         menu?.dismiss()
         renameDialog?.dismiss()
         move.end()
+        dock.cancelMove()
         clockView.stop()
         status.stop()
         wallpaper.stop()
@@ -240,6 +254,7 @@ class HomeActivity : Activity() {
         menu?.dismiss()
         renameDialog?.dismiss()
         move.end()
+        dock.cancelMove()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean =
@@ -252,10 +267,46 @@ class HomeActivity : Activity() {
     private fun refresh() {
         val arranged = homeApps(installedApps.tvApps(), packageName, arrangements.read(), customizations.read(), Locale.getDefault())
         this.arranged = arranged
+        showApps(arranged)
+        prepareTiles()
+    }
+
+    /** [arranged]'s apps, as tiles or in the dock, as the home mode says; why there are none, if there aren't. */
+    private fun showApps(arranged: ArrangedApps) {
+        if (mode == HomeMode.DOCK) {
+            dock.apps = arranged.docked
+            showWhyDockEmpty(arranged)
+            if (!topBar.hasFocus()) (if (arranged.docked.isNotEmpty()) dock else settingsEntry).requestFocus()
+            return
+        }
         // Unchanged, as on most returns to the home screen: keep the tiles, their images and focus.
         if (arranged.shown != shown) show(arranged.shown)
         showWhyEmpty(arranged)
-        prepareTiles()
+    }
+
+    /**
+     * The home mode (NETTV fork): the tiles, or the dock in their place. The mode not shown holds
+     * nothing: leaving the tiles drops them, and their images, and leaving the dock its icons, so
+     * only the mode in use costs memory.
+     */
+    private fun showMode(mode: HomeMode) {
+        if (mode == this.mode) return
+        this.mode = mode
+        menu?.dismiss()
+        renameDialog?.dismiss()
+        move.end()
+        dock.cancelMove()
+        if (mode == HomeMode.DOCK) {
+            tiles.removeAllViews()
+            shown = null
+            tiles.visibility = View.GONE
+            dock.visibility = View.VISIBLE
+        } else {
+            dock.apps = emptyList()
+            dock.visibility = View.GONE
+            tiles.visibility = View.VISIBLE
+        }
+        arranged?.let(::showApps)
     }
 
     /**
@@ -264,6 +315,7 @@ class HomeActivity : Activity() {
      * meanwhile, or whose picture was prepared while the home screen was stopped, follow it too.
      */
     private fun prepareTiles() {
+        if (mode == HomeMode.DOCK) return   // no tiles: prepared once they're back
         val arranged = arranged ?: return
         tileImages.prepare(arranged.tileDrawings(homeTileSize(tiles.tileGeometry)))
         followTileImages()
@@ -275,6 +327,8 @@ class HomeActivity : Activity() {
     }
 
     private fun show(appearance: Appearance) {
+        dock.appearance = appearance.dock
+        showMode(appearance.homeMode)
         tiles.tileGeometry = appearance.tileGeometry
         tiles.tileStyle = appearance.tileStyle
         topBar.appearance = appearance.topBar
@@ -332,6 +386,30 @@ class HomeActivity : Activity() {
                 true
             }
             AppAction.Info -> Handover.toScreen { openAppInfo(tile.app) }
+            AppAction.RemoveFromDock -> arrangements.save(arranged.undock(tile.app).arrangement)
+        }
+    }
+
+    /** The menu of the dock's focused icon, [app]'s (NETTV fork): beside the icon, as a tile's is. */
+    private fun openDockMenu(app: HomeApp) {
+        val arranged = arranged ?: return
+        if (arranged.docked.none { it.launchable == app.launchable }) return
+        val menu = menu ?: TileMenu(this).also { menu = it }
+        menu.style(colorRoles(shownTheme ?: appearanceSettings.read().theme), tiles.tileStyle.corners)
+        menu.show(app, dock.focusedBounds(), dockActions(arranged, app, appInfoScreen.exists())) { action -> actInDock(action, app) }
+    }
+
+    /** What OK on an entry of a dock icon's menu does. */
+    private fun actInDock(action: AppAction, app: HomeApp) {
+        val arranged = arranged ?: return
+        when (action) {
+            AppAction.Move -> dock.startMove()
+            // Stored, and shown as any change of the arrangement is (showArrangement).
+            AppAction.RemoveFromDock -> arrangements.save(arranged.undock(app).arrangement)
+            AppAction.Rename -> askName(app)
+            AppAction.Info -> Handover.toScreen { openAppInfo(app) }
+            // Not in a dock icon's menu.
+            AppAction.Hide, AppAction.TileBanner -> Unit
         }
     }
 
@@ -426,6 +504,20 @@ class HomeActivity : Activity() {
         if (!topBarFocused) (tiles.getChildAt(index) ?: settingsEntry).requestFocus()
     }
 
+    /** With an empty dock, says where to add apps (NETTV fork). */
+    private fun showWhyDockEmpty(arranged: ArrangedApps) {
+        if (arranged.docked.isNotEmpty()) {
+            empty.visibility = View.GONE
+            return
+        }
+        empty.text = if (arranged.shown.isEmpty() && arranged.hidden.isEmpty()) {
+            getString(R.string.home_no_apps)
+        } else {
+            getString(R.string.home_dock_empty, getString(SettingsR.string.settings_title), getString(SettingsR.string.settings_hide_apps))
+        }
+        empty.visibility = View.VISIBLE
+    }
+
     /** Without tiles, says why: nothing installed, or everything hidden (and where to show apps again). */
     private fun showWhyEmpty(arranged: ArrangedApps) {
         if (arranged.shown.isNotEmpty()) {
@@ -478,7 +570,12 @@ class HomeActivity : Activity() {
     // (OnBackInvokedCallback). Doesn't call super, which would close the home screen.
     @SuppressLint("GestureBackNavigation")
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() = move.back()
+    override fun onBackPressed() = back()
+
+    /** Back: puts back an app being moved in the dock, or ends moving a tile; else nothing, as a home screen. */
+    private fun back() {
+        if (dock.moving) dock.cancelMove() else move.back()
+    }
 }
 
 /** How long after the home screen is back its window has its own animations again, in ms: Android's transition starts well within it. */

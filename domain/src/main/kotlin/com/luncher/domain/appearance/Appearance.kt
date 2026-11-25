@@ -13,4 +13,8 @@ data class Appearance(
     val topBar: TopBarAppearance = TopBarAppearance(),
     val background: Background = Background(),
     val theme: ThemeAppearance = ThemeAppearance(),
+    /** Tiles or the dock (NETTV fork). */
+    val homeMode: HomeMode = HomeMode.TILES,
+    /** The dock's look, while [homeMode] is [HomeMode.DOCK] (NETTV fork). */
+    val dock: DockAppearance = DockAppearance(),
 )

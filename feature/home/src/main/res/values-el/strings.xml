@@ -25,4 +25,10 @@
     <string name="home_tile_images_screen_changed">Προσαρμογή των banner πλακιδίων σε αυτή την οθόνη…</string>
     <string name="home_tile_images_outdated">Ενημέρωση των banner πλακιδίων…</string>
     <string name="home_tile_images_saving">Επεξεργασία banner πλακιδίου…</string>
+    <!-- NETTV fork, the dock: its icon menu's entry that takes the app out of the dock. -->
+    <string name="home_menu_remove_from_dock">Αφαίρεση από τη μπάρα</string>
+    <!-- NETTV fork: shown when the dock holds no apps. The settings panel's title and its Show apps entry. -->
+    <string name="home_dock_empty">Η μπάρα είναι άδεια. Ανοίξτε <xliff:g id="settings" example="Settings">%1$s</xliff:g> → <xliff:g id="show_apps" example="Show apps">%2$s</xliff:g> για να προσθέσετε εφαρμογές.</string>
+    <!-- NETTV fork: above the dock's icon while it's being moved. -->
+    <string name="home_dock_move_hint">◀ ▶ μετακίνηση · OK για απόθεση</string>
 </resources>

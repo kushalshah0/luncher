@@ -10,9 +10,18 @@ data class AppArrangement(
     val order: List<LaunchableApp>?,
     /** The hidden apps, most recently hidden first unless the user moved them. */
     val hidden: List<LaunchableApp>,
+    /**
+     * The apps in the dock, in its order (NETTV fork); null until the user first changes it, which
+     * means the first [DEFAULT_DOCK_SIZE] shown apps. Kept apart from shown and hidden: an app may
+     * be in the dock and hidden from the tiles.
+     */
+    val docked: List<LaunchableApp>? = null,
 ) {
     companion object {
         /** Nothing arranged yet: every app shown, by label. */
         val NONE = AppArrangement(order = null, hidden = emptyList())
+
+        /** How many apps the dock holds before the user first changes it: the first shown ones. */
+        const val DEFAULT_DOCK_SIZE = 6
     }
 }

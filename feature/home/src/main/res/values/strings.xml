@@ -62,4 +62,10 @@
     <!-- The same, while a tile's picture saved in the tile banner picker is prepared, which the
          user left before it was done: as that picker says it (settings_tile_banner_saving). -->
     <string name="home_tile_images_saving">Processing tile banner…</string>
+    <!-- NETTV fork, the dock: its icon menu's entry that takes the app out of the dock. -->
+    <string name="home_menu_remove_from_dock">Remove from dock</string>
+    <!-- NETTV fork: shown when the dock holds no apps. The settings panel's title and its Show apps entry. -->
+    <string name="home_dock_empty">Your dock is empty. Open <xliff:g id="settings" example="Settings">%1$s</xliff:g> → <xliff:g id="show_apps" example="Show apps">%2$s</xliff:g> to add apps.</string>
+    <!-- NETTV fork: above the dock's icon while it's being moved. -->
+    <string name="home_dock_move_hint">◀ ▶ to move · OK to drop</string>
 </resources>

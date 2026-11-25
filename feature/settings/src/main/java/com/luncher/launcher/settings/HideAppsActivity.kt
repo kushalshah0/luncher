@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.TextView
+import com.luncher.domain.appearance.HomeMode
 import com.luncher.domain.apps.AppVisibility
 import com.luncher.domain.apps.ArrangedApps
 import com.luncher.domain.apps.homeApps
@@ -17,6 +18,11 @@ import com.luncher.launcher.ui.R as UiR
 import java.util.Locale
 
 /**
+ * Show apps (NETTV fork: Hide apps until the dock). In the tiles' mode, as before: OK hides an app
+ * from the tiles, or shows it again, and a hidden one has "Hidden". In the dock's mode, OK puts an
+ * app in the dock, last, or takes it out, and a docked one has "In dock"; hidden or not doesn't
+ * matter there. The rest as follows.
+ *
  * The settings panel's list of every app by name, a side sheet in the panel's place: OK on an app
  * hides it from the home screen, or shows it again; a hidden one has "Hidden". Each app is listed
  * by its real name, the device's, in that order, with the name the user gave it on the home
@@ -33,6 +39,9 @@ class HideAppsActivity : Activity() {
     private var rows: List<AppVisibility> = emptyList()
     private val adapter = Rows()
     private lateinit var list: ListView
+
+    /** Whether the list puts apps in the dock rather than hiding them: the home mode as it opened. */
+    private val docking by lazy { graph.appearanceSettings.read().homeMode == HomeMode.DOCK }
     private val theme by lazy {
         ScreenTheme(graph.appearanceSettings) {
             checkNotNull(window).stylePanel(it)
@@ -51,6 +60,9 @@ class HideAppsActivity : Activity() {
         setContentView(R.layout.settings_hide_apps_activity)
         placeAsSheet(checkNotNull(window), graph.appearanceSettings.read().topBar)
         list = findViewById(R.id.settings_apps)
+        if (docking) {
+            findViewById<TextView>(R.id.settings_hide_apps_hint).setText(R.string.settings_show_apps_dock_hint)
+        }
         window.stylePanel(theme.roles)
         readApps()
         list.adapter = adapter
@@ -89,7 +101,11 @@ class HideAppsActivity : Activity() {
     }
 
     private fun toggle(row: AppVisibility) {
-        arranged = if (row.hidden) arranged.show(row.app) else arranged.hide(row.app)
+        arranged = when {
+            docking -> if (row.docked) arranged.undock(row.app) else arranged.dock(row.app)
+            row.hidden -> arranged.show(row.app)
+            else -> arranged.hide(row.app)
+        }
         arrangements.save(arranged.arrangement)
         rows = arranged.byLabel()   // by name, so every row stays where it was
         adapter.notifyDataSetChanged()
@@ -125,17 +141,22 @@ class HideAppsActivity : Activity() {
                 it.layoutParams.height = rowHeight
             }
             val row = rows[position]
+            // Dimmed: hidden from the tiles, or, in the dock's mode, not in the dock.
+            val off = if (docking) !row.docked else row.hidden
             // The app's real name, as the device has it; below it, the one the user gave it, if any.
             view.findViewById<ThemedText>(R.id.settings_app_label).apply {
                 text = row.app.installed.label
-                changeRole(if (row.hidden) ThemedText.ON_SURFACE_VARIANT else ThemedText.ON_SURFACE)
+                changeRole(if (off) ThemedText.ON_SURFACE_VARIANT else ThemedText.ON_SURFACE)
             }
             val name = row.app.customization.name
             view.findViewById<ThemedText>(R.id.settings_app_name).apply {
                 visibility = if (name != null) View.VISIBLE else View.GONE
                 if (name != null) text = getString(R.string.settings_app_renamed, name)
             }
-            view.findViewById<View>(R.id.settings_app_hidden).visibility = if (row.hidden) View.VISIBLE else View.GONE
+            // The chip: "Hidden" on a hidden app, or, in the dock's mode, "In dock" on a docked one.
+            val chip = view.findViewById<TextView>(R.id.settings_app_hidden)
+            chip.setText(if (docking) R.string.settings_in_dock else R.string.settings_hidden)
+            chip.visibility = if (if (docking) row.docked else row.hidden) View.VISIBLE else View.GONE
             view.styleAll(theme.roles)
             return view
         }

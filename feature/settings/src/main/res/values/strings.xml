@@ -5,7 +5,7 @@
     <!-- The settings panel's title. -->
     <string name="settings_title">Settings</string>
     <!-- The entry that opens the list of apps to hide or show, and that list's title. -->
-    <string name="settings_hide_apps">Hide apps</string>
+    <string name="settings_hide_apps">Show apps</string>
     <!-- After an app's name in that list, while the app is hidden. -->
     <string name="settings_hidden">Hidden</string>
     <!-- In that list, below the real name of an app the user renamed on the home screen, in
@@ -421,4 +421,28 @@
     </plurals>
     <!-- Add from folder: the label above the selected picture's preview. -->
     <string name="settings_pictures_folder_preview_label">Preview</string>
+    <!-- NETTV fork, the dock. Show apps in the dock's mode: the hint, and the chip on a docked app. -->
+    <string name="settings_show_apps_dock_hint">OK adds an app to the dock, or takes it out</string>
+    <string name="settings_in_dock">In dock</string>
+    <!-- The appearance editor's groups: the home mode's, and the dock's. -->
+    <string name="settings_appearance_home">Home screen</string>
+    <string name="settings_appearance_dock">Dock</string>
+    <!-- The home mode: the apps as TV tiles, or in a dock of round icons. -->
+    <string name="settings_appearance_home_mode">Mode</string>
+    <string name="settings_appearance_mode_tiles">TV tiles</string>
+    <string name="settings_appearance_mode_dock">Dock</string>
+    <!-- The dock's options and their values. -->
+    <string name="settings_appearance_dock_size">Dock size</string>
+    <string name="settings_appearance_magnification">Magnification</string>
+    <string name="settings_appearance_subtle">Subtle</string>
+    <string name="settings_appearance_full">Full</string>
+    <string name="settings_appearance_dock_name">App name</string>
+    <string name="settings_appearance_shelf">Shelf</string>
+    <string name="settings_appearance_glass">Glass</string>
+    <string name="settings_appearance_dark_glass">Dark glass</string>
+    <string name="settings_appearance_none">None</string>
+    <string name="settings_appearance_shape">Shape</string>
+    <string name="settings_appearance_curved">Curved</string>
+    <string name="settings_appearance_shape_pill">Pill</string>
+    <string name="settings_appearance_soft">Soft</string>
 </resources>

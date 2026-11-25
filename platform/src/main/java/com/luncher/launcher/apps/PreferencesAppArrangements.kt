@@ -7,7 +7,8 @@ import com.luncher.domain.apps.LaunchableApp
 
 /**
  * [AppArrangements] in SharedPreferences. Each list is one string, an app per line as
- * `package/activity`: a string set would lose the order. No order key means no order yet.
+ * `package/activity`: a string set would lose the order. No order key means no order yet, and no
+ * dock key the default dock.
  *
  * Read from storage once per process, then kept; a save writes in the background (`apply`) and
  * tells the listeners at once. Every screen gets this one instance from AppGraph, so a save made in
@@ -25,13 +26,16 @@ class PreferencesAppArrangements(context: Context) : AppArrangements {
         current ?: AppArrangement(
             order = preferences.getString(ORDER, null)?.let(::decode),
             hidden = decode(preferences.getString(HIDDEN, null).orEmpty()),
+            docked = preferences.getString(DOCKED, null)?.let(::decode),
         ).also { current = it }
 
     override fun save(arrangement: AppArrangement) {
         current = arrangement
         val order = arrangement.order
+        val docked = arrangement.docked
         preferences.edit()
             .apply { if (order == null) remove(ORDER) else putString(ORDER, encode(order)) }
+            .apply { if (docked == null) remove(DOCKED) else putString(DOCKED, encode(docked)) }
             .putString(HIDDEN, encode(arrangement.hidden))
             .apply()
         listeners.toList().forEach { it() }
@@ -60,5 +64,8 @@ class PreferencesAppArrangements(context: Context) : AppArrangements {
         const val FILE = "arrangement"
         const val ORDER = "order"
         const val HIDDEN = "hidden"
+
+        /** The dock's apps (NETTV fork); no key until the user first changes the dock. */
+        const val DOCKED = "nettv_docked"
     }
 }

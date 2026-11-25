@@ -71,7 +71,7 @@ class SettingsActivity : Activity() {
     }
 
     private fun icon(entry: SettingsEntry): Int = when (entry) {
-        SettingsEntry.HideApps -> UiR.drawable.icon_eye_off
+        SettingsEntry.HideApps -> R.drawable.settings_icon_show_apps
         SettingsEntry.Appearance -> UiR.drawable.icon_palette
         SettingsEntry.SystemSettings -> UiR.drawable.icon_tv
         SettingsEntry.AndroidSettings -> R.drawable.settings_icon_phone

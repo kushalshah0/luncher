@@ -12,6 +12,8 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
 import android.widget.Toast
 import android.window.OnBackInvokedDispatcher
@@ -71,6 +73,15 @@ class HomeActivity : Activity() {
     /** Tiles or the dock, as the appearance last said (NETTV fork). */
     private var mode = HomeMode.TILES
     private lateinit var clockView: ClockView
+
+    /** The dock's idle screen (NETTV fork): shown after [IDLE_AFTER] without a key, in the dock's mode. */
+    private lateinit var idleClock: IdleClockView
+    private var idle = false
+    private var resumed = false
+
+    /** The key that woke the dock: its repeats and its release do nothing else. */
+    private var swallowedKey = KeyEvent.KEYCODE_UNKNOWN
+    private val goIdle = Runnable { enterIdle() }
     private lateinit var settingsEntry: View
     private lateinit var statusView: View
     private lateinit var status: StatusIndicators
@@ -150,6 +161,7 @@ class HomeActivity : Activity() {
         dock.onMoved = { app, index -> arranged?.let { arrangements.save(it.dockMoved(app, index).arrangement) } }
         empty = findViewById(R.id.home_empty)
         clockView = findViewById(R.id.home_clock)
+        idleClock = findViewById(R.id.home_idle)
         settingsEntry = findViewById(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
         statusView = findViewById(R.id.home_status)
@@ -165,6 +177,7 @@ class HomeActivity : Activity() {
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) {
             tiles.frost = it
             dock.frost = it
+            idleClock.frost = it
         }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
@@ -197,6 +210,14 @@ class HomeActivity : Activity() {
     override fun onResume() {
         super.onResume()
         window.decorView.postDelayed(ownAnimations, OWN_ANIMATIONS_AFTER)
+        resumed = true
+        armIdle()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        resumed = false
+        window.decorView.removeCallbacks(goIdle)
     }
 
     override fun onStart() {
@@ -225,6 +246,7 @@ class HomeActivity : Activity() {
         renameDialog?.dismiss()
         move.end()
         dock.cancelMove()
+        wake(animate = false)
         clockView.stop()
         status.stop()
         wallpaper.stop()
@@ -267,10 +289,82 @@ class HomeActivity : Activity() {
         dock.cancelMove()
         // Home, in the dock's mode: back to the dock, from the top bar too.
         if (mode == HomeMode.DOCK && dock.apps.isNotEmpty()) dock.requestFocus()
+        wake(animate = true)
+        armIdle()
     }
 
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
-        move.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // The volume keys change the volume, idle or not, and leave the idle screen as it is.
+        if (event.keyCode in VOLUME_KEYS) return super.dispatchKeyEvent(event)
+        // Idle, a key only brings the dock back: it doesn't also open or move anything.
+        if (idle && event.action == KeyEvent.ACTION_DOWN) {
+            swallowedKey = event.keyCode
+            wake(animate = true)
+        }
+        if (event.keyCode == swallowedKey) {
+            if (event.action == KeyEvent.ACTION_UP) swallowedKey = KeyEvent.KEYCODE_UNKNOWN
+            armIdle()
+            return true
+        }
+        armIdle()
+        return move.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+    }
+
+    /** Counts [IDLE_AFTER] again from now, in the dock's mode while the screen is in front. */
+    private fun armIdle() {
+        val decor = window.decorView
+        decor.removeCallbacks(goIdle)
+        if (resumed && mode == HomeMode.DOCK && !idle) decor.postDelayed(goIdle, IDLE_AFTER)
+    }
+
+    /**
+     * The dock slides down and away, the top bar fades, and the idle screen fades in over them. Not
+     * while a menu or dialog is open (the window hasn't the focus then) or an app is being moved.
+     */
+    private fun enterIdle() {
+        if (!resumed || mode != HomeMode.DOCK || idle) return
+        if (!hasWindowFocus() || dock.moving || move.active) {
+            armIdle()
+            return
+        }
+        idle = true
+        dock.animate().cancel()
+        dock.animate().translationY(dock.height.toFloat()).setStartDelay(0).setDuration(SLIDE_MS)
+            .setInterpolator(AccelerateInterpolator(1.5f))
+        topBar.animate().cancel()
+        topBar.animate().alpha(0f).setStartDelay(0).setDuration(SLIDE_MS)
+        idleClock.animate().cancel()
+        idleClock.alpha = 0f
+        idleClock.visibility = View.VISIBLE
+        idleClock.start()
+        idleClock.animate().alpha(1f).setStartDelay(SLIDE_MS / 2).setDuration(IDLE_FADE_IN_MS)
+    }
+
+    /** The idle screen fades out and the dock slides back up, or, not [animate]d, both at once. */
+    private fun wake(animate: Boolean) {
+        if (!idle) return
+        idle = false
+        idleClock.animate().cancel()
+        dock.animate().cancel()
+        topBar.animate().cancel()
+        if (!animate) {
+            idleClock.stop()
+            idleClock.visibility = View.GONE
+            idleClock.alpha = 1f
+            dock.translationY = 0f
+            topBar.alpha = 1f
+            return
+        }
+        idleClock.animate().alpha(0f).setStartDelay(0).setDuration(IDLE_FADE_OUT_MS).withEndAction {
+            if (!idle) {
+                idleClock.stop()
+                idleClock.visibility = View.GONE
+            }
+        }
+        dock.animate().translationY(0f).setStartDelay(IDLE_FADE_OUT_MS / 2).setDuration(SLIDE_MS)
+            .setInterpolator(DecelerateInterpolator(1.5f))
+        topBar.animate().alpha(1f).setStartDelay(IDLE_FADE_OUT_MS / 2).setDuration(SLIDE_MS)
+    }
 
     /**
      * Reads the apps again: apps may have been installed or removed, hidden or shown in the
@@ -304,6 +398,8 @@ class HomeActivity : Activity() {
     private fun showMode(mode: HomeMode) {
         if (mode == this.mode) return
         this.mode = mode
+        wake(animate = false)
+        armIdle()
         menu?.dismiss()
         renameDialog?.dismiss()
         move.end()
@@ -599,3 +695,13 @@ class HomeActivity : Activity() {
 
 /** How long after the home screen is back its window has its own animations again, in ms: Android's transition starts well within it. */
 private const val OWN_ANIMATIONS_AFTER = 1000L
+
+/** How long the dock waits for a key before its idle screen shows, in ms (NETTV fork). */
+private const val IDLE_AFTER = 120_000L
+
+/** The dock sliding down or up, in ms; the idle screen fading in and out. */
+private const val SLIDE_MS = 320L
+private const val IDLE_FADE_IN_MS = 450L
+private const val IDLE_FADE_OUT_MS = 220L
+
+private val VOLUME_KEYS = intArrayOf(KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE)

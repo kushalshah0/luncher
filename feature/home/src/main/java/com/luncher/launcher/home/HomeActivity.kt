@@ -62,6 +62,11 @@ class HomeActivity : Activity() {
     private lateinit var topBar: TopBarView
     private lateinit var tiles: AppTilesView
     private lateinit var dock: DockView
+    private lateinit var dockSounds: DockSounds
+
+    /** Whether the dock ticks, as the appearance last said; and whether the screen is started, when it may. */
+    private var dockSoundsOn = false
+    private var started = false
 
     /** Tiles or the dock, as the appearance last said (NETTV fork). */
     private var mode = HomeMode.TILES
@@ -140,6 +145,8 @@ class HomeActivity : Activity() {
         dock = findViewById(R.id.home_dock)
         dock.onOpen = ::open
         dock.onMenu = ::openDockMenu
+        dockSounds = DockSounds(this)
+        dock.onStep = { dockSounds.tick() }
         dock.onMoved = { app, index -> arranged?.let { arrangements.save(it.dockMoved(app, index).arrangement) } }
         empty = findViewById(R.id.home_empty)
         clockView = findViewById(R.id.home_clock)
@@ -194,6 +201,7 @@ class HomeActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
+        started = true
         clockView.start(clock)
         status.start()
         wallpaper.start()
@@ -209,6 +217,8 @@ class HomeActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        started = false
+        followDockSounds()
         // Leaving the home screen (another app, the screen off) closes the menu, or the rename
         // dialog, and ends moving.
         menu?.dismiss()
@@ -329,6 +339,8 @@ class HomeActivity : Activity() {
     private fun show(appearance: Appearance) {
         dock.appearance = appearance.dock
         showMode(appearance.homeMode)
+        dockSoundsOn = appearance.homeMode == HomeMode.DOCK && appearance.dock.sounds
+        followDockSounds()
         tiles.tileGeometry = appearance.tileGeometry
         tiles.tileStyle = appearance.tileStyle
         topBar.appearance = appearance.topBar
@@ -502,6 +514,11 @@ class HomeActivity : Activity() {
         // without tiles, the settings entry.
         val index = apps.indexOfFirst { it.launchable == focused }.takeIf { it >= 0 } ?: focusedIndex.coerceAtMost(apps.size - 1)
         if (!topBarFocused) (tiles.getChildAt(index) ?: settingsEntry).requestFocus()
+    }
+
+    /** The dock's tick loaded while the started screen shows the dock with its sounds on; else released. */
+    private fun followDockSounds() {
+        if (started && dockSoundsOn) dockSounds.start() else dockSounds.stop()
     }
 
     /** With an empty dock, says where to add apps (NETTV fork). */

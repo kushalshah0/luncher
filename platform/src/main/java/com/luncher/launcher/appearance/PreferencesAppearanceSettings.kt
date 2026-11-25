@@ -78,6 +78,7 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
         AppearanceOption.DockName -> "nettv_dock_name"
         AppearanceOption.DockShelf -> "nettv_dock_shelf"
         AppearanceOption.DockShape -> "nettv_dock_shape"
+        AppearanceOption.DockSound -> "nettv_dock_sound"
         AppearanceOption.VerticalAlignment -> "tile_vertical_alignment"
         AppearanceOption.HorizontalAlignment -> "tile_horizontal_alignment"
         AppearanceOption.FullBottomRow -> "tile_full_bottom_row"

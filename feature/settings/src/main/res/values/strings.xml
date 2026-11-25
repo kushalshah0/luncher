@@ -444,5 +444,7 @@
     <string name="settings_appearance_shape">Shape</string>
     <string name="settings_appearance_curved">Curved</string>
     <string name="settings_appearance_shape_pill">Pill</string>
+    <!-- Whether moving between the dock's icons ticks. -->
+    <string name="settings_appearance_dock_sound">Sounds</string>
     <string name="settings_appearance_soft">Soft</string>
 </resources>

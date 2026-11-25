@@ -238,5 +238,7 @@
     <string name="settings_appearance_shape">Σχήμα</string>
     <string name="settings_appearance_curved">Καμπύλο</string>
     <string name="settings_appearance_shape_pill">Κάψουλα</string>
+    <!-- Whether moving between the dock's icons ticks. -->
+    <string name="settings_appearance_dock_sound">Ήχοι</string>
     <string name="settings_appearance_soft">Απαλό</string>
 </resources>

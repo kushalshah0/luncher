@@ -37,6 +37,12 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
      */
     val showsOnHome: Boolean get() = true
 
+    /**
+     * Whether the option is heard, not seen (NETTV fork: the dock's sounds): it changes nothing
+     * any screen draws, so the drawing checks leave it out.
+     */
+    val isHeard: Boolean get() = false
+
     /** Whether the home screen shows the apps as TV tiles or in a dock (NETTV fork). */
     data object HomeMode : AppearanceOption<Home> {
         override val values: List<Home> = Home.entries
@@ -83,6 +89,16 @@ sealed interface AppearanceOption<T> : Option<Appearance, AppearanceContext, T> 
         override fun set(model: Appearance, value: Shape) = model.copy(dock = model.dock.copy(shape = value))
         override fun appliesTo(model: Appearance, context: AppearanceContext) =
             model.homeMode == Home.DOCK && model.dock.shelf != Shelf.NONE
+    }
+
+    /** Whether moving between the dock's icons ticks (NETTV fork): heard, not drawn. */
+    data object DockSound : AppearanceOption<Boolean> {
+        override val values: List<Boolean> = listOf(true, false)
+        override fun get(model: Appearance) = model.dock.sounds
+        override fun set(model: Appearance, value: Boolean) = model.copy(dock = model.dock.copy(sounds = value))
+        override fun appliesTo(model: Appearance, context: AppearanceContext) = model.homeMode == Home.DOCK
+        override val showsOnHome: Boolean get() = false
+        override val isHeard: Boolean get() = true
     }
 
     /** Where the rows of tiles go in the height. */

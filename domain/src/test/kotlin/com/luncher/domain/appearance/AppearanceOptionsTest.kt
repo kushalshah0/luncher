@@ -37,7 +37,7 @@ class AppearanceOptionsTest {
         assertEquals(
             listOf(
                 AppearanceOption.DockSize, AppearanceOption.DockMagnification, AppearanceOption.DockName,
-                AppearanceOption.DockShelf, AppearanceOption.DockShape,
+                AppearanceOption.DockShelf, AppearanceOption.DockShape, AppearanceOption.DockSound,
             ),
             catalog.groups[2].options,
         )

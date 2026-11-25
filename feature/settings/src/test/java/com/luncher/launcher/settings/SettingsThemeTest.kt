@@ -48,7 +48,7 @@ class SettingsThemeTest {
 
     @Test
     fun `every value of the options the home screen doesn't show changes what the settings draw`() {
-        val changes = appearanceChanges().filter { !it.option.showsOnHome }
+        val changes = appearanceChanges().filter { !it.option.showsOnHome && !it.option.isHeard }
         assertFalse("no option to check", changes.isEmpty())
         for (change in changes) {
             assertFalse("$change draws as ${change.option} at its default", draw(change.base).sameAs(draw(change.changed)))
@@ -59,7 +59,7 @@ class SettingsThemeTest {
     @Test
     fun `only the theme's options leave the home screen as it is`() {
         val theme = appearanceOptions().groups.single { it.topic == AppearanceTopic.THEME }.options
-        assertFalse(appearanceOptions().all.any { !it.showsOnHome && it !in theme })
+        assertFalse(appearanceOptions().all.any { !it.showsOnHome && !it.isHeard && it !in theme })
     }
 
     private fun animationStyle(theme: Int): Int {

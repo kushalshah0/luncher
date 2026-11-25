@@ -76,6 +76,7 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
         AppearanceOption.DockName -> R.string.settings_appearance_dock_name
         AppearanceOption.DockShelf -> R.string.settings_appearance_shelf
         AppearanceOption.DockShape -> R.string.settings_appearance_shape
+        AppearanceOption.DockSound -> R.string.settings_appearance_dock_sound
         AppearanceOption.VerticalAlignment -> R.string.settings_appearance_vertical_alignment
         AppearanceOption.HorizontalAlignment -> R.string.settings_appearance_horizontal_alignment
         AppearanceOption.FullBottomRow -> R.string.settings_appearance_full_bottom_row
@@ -107,6 +108,7 @@ internal object AppearanceLabels : OptionLabels<Appearance, AppearanceOption<*>>
         AppearanceOption.DockName -> context.getString(shown(AppearanceOption.DockName.get(model)))
         AppearanceOption.DockShelf -> context.getString(shelf(AppearanceOption.DockShelf.get(model)))
         AppearanceOption.DockShape -> context.getString(dockShape(AppearanceOption.DockShape.get(model)))
+        AppearanceOption.DockSound -> context.getString(onOff(AppearanceOption.DockSound.get(model)))
         AppearanceOption.VerticalAlignment -> context.getString(vertical(AppearanceOption.VerticalAlignment.get(model)))
         AppearanceOption.HorizontalAlignment -> context.getString(horizontal(AppearanceOption.HorizontalAlignment.get(model)))
         AppearanceOption.FullBottomRow -> context.getString(onOff(AppearanceOption.FullBottomRow.get(model)))

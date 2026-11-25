@@ -48,6 +48,7 @@ fun appearanceOptions(): AppearanceOptions =
                     AppearanceOption.DockName,
                     AppearanceOption.DockShelf,
                     AppearanceOption.DockShape,
+                    AppearanceOption.DockSound,
                 ),
             ),
             AppearanceGroup(

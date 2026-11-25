@@ -96,6 +96,9 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
     /** Opens [HomeApp]'s menu: a long press of OK on its icon. */
     var onMenu: (HomeApp) -> Unit = {}
 
+    /** The focus moved to another icon: the tick ([DockSounds]). */
+    var onStep: () -> Unit = {}
+
     /** The docked app moved to its new place in the dock, as OK ends moving it. */
     var onMoved: (HomeApp, Int) -> Unit = { _, _ -> }
 
@@ -302,6 +305,7 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
 
         }
         select(to)
+        onStep()
         return true
     }
 

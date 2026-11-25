@@ -218,5 +218,7 @@
     <string name="settings_appearance_shape">形状</string>
     <string name="settings_appearance_curved">曲线</string>
     <string name="settings_appearance_shape_pill">胶囊</string>
+    <!-- Whether moving between the dock's icons ticks. -->
+    <string name="settings_appearance_dock_sound">音效</string>
     <string name="settings_appearance_soft">柔和</string>
 </resources>

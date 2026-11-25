@@ -16,6 +16,8 @@ data class DockAppearance(
     val shelf: DockShelf = DockShelf.GLASS,
     /** How round the shelf's ends are. */
     val shape: DockShape = DockShape.CURVED,
+    /** Whether moving between the dock's icons plays a short, soft tick. */
+    val sounds: Boolean = true,
 )
 
 /** How much the focused icon grows: [scale] times its size at rest. */

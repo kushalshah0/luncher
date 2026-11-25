@@ -306,5 +306,7 @@
     <string name="settings_appearance_shape">الشكل</string>
     <string name="settings_appearance_curved">منحنٍ</string>
     <string name="settings_appearance_shape_pill">كبسولة</string>
+    <!-- Whether moving between the dock's icons ticks. -->
+    <string name="settings_appearance_dock_sound">الأصوات</string>
     <string name="settings_appearance_soft">ناعم</string>
 </resources>

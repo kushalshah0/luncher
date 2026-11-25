@@ -4,12 +4,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PorterDuff
 import android.graphics.LinearGradient
-import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
@@ -52,7 +51,8 @@ internal class DockIcons(context: Context) {
             icons.clear()
         }
 
-    private val maskPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN) }
+    /** Fills the circle with the icon drawn square: the circle cut, its edge smooth, on every Android version. */
+    private val cutPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val platePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val glossPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -72,8 +72,11 @@ internal class DockIcons(context: Context) {
 
     private fun draw(app: LaunchableApp): Bitmap {
         val size = size.coerceAtLeast(1)
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
+        // The icon drawn square first, then the circle filled with it: a blend that erases outside
+        // a drawn circle (DST_IN) leaves the corners on Android 7's software canvas, which applies
+        // it only where the circle covers.
+        val square = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(square)
         val icon = load(ComponentName(app.packageName, app.activityName))
         if (Build.VERSION.SDK_INT >= 26 && icon is AdaptiveIconDrawable) {
             // The layers are 108 dp, of which a launcher's mask shows the middle 72: that middle fills the circle.
@@ -87,13 +90,17 @@ internal class DockIcons(context: Context) {
         } else {
             drawLegacy(icon, canvas, size)
         }
-        // Cut to the circle, its edge smooth; then the same finish on every icon: a light from the
-        // top, and a faint rim, as glass catching it.
-        canvas.drawCircle(size / 2f, size / 2f, size / 2f, maskPaint)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val round = Canvas(bitmap)
+        cutPaint.shader = BitmapShader(square, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        round.drawCircle(size / 2f, size / 2f, size / 2f, cutPaint)
+        cutPaint.shader = null
+        square.recycle()
+        // The same finish on every icon: a light from the top, and a faint rim, as glass catching it.
         glossPaint.shader = LinearGradient(0f, 0f, 0f, size * GLOSS_DEPTH, Color.argb(GLOSS_ALPHA, 255, 255, 255), Color.TRANSPARENT, Shader.TileMode.CLAMP)
-        canvas.drawCircle(size / 2f, size / 2f, size / 2f, glossPaint)
+        round.drawCircle(size / 2f, size / 2f, size / 2f, glossPaint)
         rimPaint.strokeWidth = (size / RIM_PER_SIZE).coerceAtLeast(1f)
-        canvas.drawCircle(size / 2f, size / 2f, size / 2f - rimPaint.strokeWidth / 2, rimPaint)
+        round.drawCircle(size / 2f, size / 2f, size / 2f - rimPaint.strokeWidth / 2, rimPaint)
         return bitmap
     }
 

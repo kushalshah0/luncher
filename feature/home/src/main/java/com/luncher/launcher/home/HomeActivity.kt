@@ -265,6 +265,8 @@ class HomeActivity : Activity() {
         renameDialog?.dismiss()
         move.end()
         dock.cancelMove()
+        // Home, in the dock's mode: back to the dock, from the top bar too.
+        if (mode == HomeMode.DOCK && dock.apps.isNotEmpty()) dock.requestFocus()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean =

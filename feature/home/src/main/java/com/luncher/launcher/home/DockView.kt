@@ -124,9 +124,11 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
     private var bounceHeight = 0f
     private val bubbleHeight = 30 * density
     private val bubbleGap = 12 * density
-    private val caretWidth = 12 * density
-    private val caretHeight = 6 * density
-    private val dotRadius = 2 * density
+    private val caretWidth = 16 * density
+    private val caretHeight = 8 * density
+
+    /** The dot's radius: in proportion to the icons, as a Mac's, and big enough to see from a sofa. */
+    private var dotRadius = 3 * density
     private val bubblePadding = 14 * density
     private val sidePadding = 48 * density
     private val shadowDrop = 3 * density
@@ -225,6 +227,7 @@ internal class DockView(context: Context, attrs: AttributeSet?) : View(context, 
         }
         bottomMargin = resources.getDimension(R.dimen.home_padding_vertical)
         lift = icon * 0.22f
+        dotRadius = (icon * 0.05f).coerceAtLeast(3 * density)
         bounceHeight = icon * 0.32f
         icons.size = (layout.largestIconPx * PRESSED_MAX).roundToInt()
         requestLayout()

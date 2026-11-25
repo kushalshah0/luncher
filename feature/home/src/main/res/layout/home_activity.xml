@@ -165,7 +165,7 @@
         android:textSize="@dimen/home_empty_text"
         android:visibility="gone" />
 
-    <!-- NETTV fork: the dock's idle screen, over everything: frosted wallpaper and the time
+    <!-- NETTV fork: the dock's idle screen, over everything: a dark blurred backdrop, the time and date
          (IdleClockView). Gone until the dock has been idle a while; any key brings the dock back. -->
     <com.luncher.launcher.home.IdleClockView
         android:id="@+id/home_idle"

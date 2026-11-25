@@ -177,7 +177,6 @@ class HomeActivity : Activity() {
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture) {
             tiles.frost = it
             dock.frost = it
-            idleClock.frost = it
         }
         working = HomeWorking(this, graph.wallpaper, tileImages)
         move = MoveMode(
